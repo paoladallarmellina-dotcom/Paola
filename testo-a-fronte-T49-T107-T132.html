@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>Versioni greche con testo a fronte</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gentium+Book+Plus:ital,wght@0,400;0,700;1,400;1,700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400;1,500&display=swap">
+<style>
+  :root {
+    --paper: #FAF8F4;
+    --ink: #26241F;
+    --ink-soft: #57534A;
+    --accent: #2B5E75;
+    --accent-soft: #EAF0F2;
+    --rule: #E2DDD3;
+    --badge-ink: #FAF8F4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #16191D;
+      --ink: #E6E2D9;
+      --ink-soft: #A9A398;
+      --accent: #7FB3C8;
+      --accent-soft: #1E2A31;
+      --rule: #2C3138;
+      --badge-ink: #10141A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #16191D;
+    --ink: #E6E2D9;
+    --ink-soft: #A9A398;
+    --accent: #7FB3C8;
+    --accent-soft: #1E2A31;
+    --rule: #2C3138;
+    --badge-ink: #10141A;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Gentium Book Plus", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    line-height: 1.55;
+    margin: 0;
+    padding: 2.5rem 1.25rem 4rem;
+  }
+  .page { max-width: 56rem; margin: 0 auto; }
+
+  header.masthead { border-bottom: 3px double var(--accent); padding-bottom: 1.1rem; margin-bottom: .9rem; }
+  .masthead .kicker {
+    font-family: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+    font-size: .72rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 .35rem;
+  }
+  .masthead h1 { font-size: 1.9rem; font-weight: 700; margin: 0 0 .3rem; text-wrap: balance; }
+  .masthead p.sub {
+    font-family: "Alegreya Sans", system-ui, sans-serif;
+    color: var(--ink-soft); margin: 0; font-size: .95rem;
+  }
+  .legenda {
+    font-family: "Alegreya Sans", system-ui, sans-serif;
+    font-size: .85rem; color: var(--ink-soft);
+    border: 1px solid var(--rule); border-radius: 6px;
+    padding: .7rem .9rem; margin: 0 0 2.2rem;
+  }
+  .legenda strong { color: var(--ink); font-weight: 700; }
+
+  section.testo { margin: 0 0 3.2rem; }
+  .texthead { display: flex; align-items: baseline; gap: .75rem; border-bottom: 2px solid var(--accent); padding-bottom: .4rem; margin-bottom: .35rem; }
+  .tbadge {
+    font-family: "Alegreya Sans", system-ui, sans-serif;
+    background: var(--accent); color: var(--badge-ink);
+    font-weight: 700; font-size: .95rem; letter-spacing: .02em;
+    padding: .1rem .55rem; border-radius: 4px; white-space: nowrap;
+  }
+  .texthead h2 { font-size: 1.35rem; margin: 0; font-weight: 700; text-wrap: balance; }
+  .fonte {
+    font-family: "Alegreya Sans", system-ui, sans-serif;
+    font-size: .82rem; color: var(--ink-soft); margin: .15rem 0 0;
+  }
+  .fonte b { color: var(--accent); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: .72rem; }
+  .fonte i { font-style: italic; }
+  .argomento {
+    font-family: "Alegreya Sans", system-ui, sans-serif;
+    font-size: .92rem; color: var(--ink-soft);
+    background: var(--accent-soft); border-radius: 6px;
+    padding: .65rem .9rem; margin: .8rem 0 1.2rem;
+  }
+
+  .colhead {
+    display: grid; grid-template-columns: 1fr 1fr; column-gap: 1.6rem;
+    font-family: "Alegreya Sans", system-ui, sans-serif;
+    font-size: .68rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--accent);
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: .3rem; margin-bottom: .2rem;
+  }
+  .row {
+    display: grid; grid-template-columns: 1fr 1fr; column-gap: 1.6rem;
+    padding: .65rem 0;
+    border-bottom: 1px solid var(--rule);
+    break-inside: avoid;
+  }
+  .row:last-child { border-bottom: none; }
+  .row .gr { font-size: 1.05rem; position: relative; padding-right: .8rem; }
+  .row .gr::after {
+    content: ""; position: absolute; top: .15rem; bottom: .15rem; right: 0;
+    width: 1px; background: var(--rule);
+  }
+  .row .it { font-style: italic; font-size: .98rem; color: var(--ink); }
+  .row .it .chi {
+    font-family: "Alegreya Sans", system-ui, sans-serif;
+    font-style: normal; font-weight: 700; font-size: .68rem;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--accent);
+    display: block; margin-bottom: .1rem;
+  }
+  .nota-apparato {
+    font-family: "Alegreya Sans", system-ui, sans-serif;
+    font-size: .8rem; color: var(--ink-soft);
+    border-top: 1px solid var(--rule); margin-top: 1.2rem; padding-top: .5rem;
+  }
+  .nota-apparato .gr-inline { font-family: "Gentium Book Plus", serif; font-size: .95rem; color: var(--ink); }
+
+  footer.colophon {
+    font-family: "Alegreya Sans", system-ui, sans-serif;
+    font-size: .78rem; color: var(--ink-soft);
+    border-top: 1px solid var(--rule); padding-top: .8rem; margin-top: 1rem;
+  }
+
+  @media (max-width: 640px) {
+    .colhead { display: none; }
+    .row { grid-template-columns: 1fr; row-gap: .35rem; }
+    .row .gr { padding-right: 0; }
+    .row .gr::after { display: none; }
+    .row .it { border-left: 3px solid var(--accent); padding-left: .7rem; }
+  }
+  @media print {
+    :root { --paper: #ffffff; }
+    body { padding: 0; font-size: 10.5pt; }
+    .page { max-width: 100%; }
+    section.testo { break-before: page; }
+    section.testo:first-of-type { break-before: auto; }
+    .row { break-inside: avoid; }
+  }
+</style>
+
+<div class="page">
+  <header class="masthead">
+    <p class="kicker">Greco &middot; versioni con testo a fronte</p>
+    <h1>Versioni greche con testo a fronte</h1>
+    <p class="sub">T49 Tucidide &middot; T107 Senofonte &middot; T132 Platone — testo greco a sinistra, traduzione italiana a destra, allineati periodo per periodo</p>
+  </header>
+
+  <div class="legenda">
+    <strong>Come leggere.</strong> Ogni riga corrisponde a un periodo: a sinistra il testo greco, a destra la traduzione italiana continua. Per l&rsquo;analisi parola per parola si veda la dispensa con traduzione interlineare.
+  </div>
+
+  <!-- ===================== T49 ===================== -->
+  <section class="testo">
+    <div class="texthead"><span class="tbadge">T49</span><h2>Alcibiade è condannato in contumacia</h2></div>
+    <p class="fonte"><b>Fonte</b> Tucidide, <i>La guerra del Peloponneso</i> (VI 61) &nbsp;&middot;&nbsp; <b>Costrutti</b> usi del participio; proposizione consecutiva, temporale; usi di ὡς</p>
+    <p class="argomento">Mentre Alcibiade è impegnato nella campagna di Sicilia, i sospetti contro di lui, ad Atene, si fanno sempre più insistenti. Si decide di processarlo per metterlo a morte e una nave viene inviata per riportarlo in patria. Alcibiade la segue fino a un certo punto; poi però si dà alla fuga.</p>
+
+    <div class="colhead"><span>Testo greco</span><span>Traduzione</span></div>
+
+    <div class="row">
+      <div class="gr">Πανταχόθεν τε περιειστήκει ὑποψία ἐς τὸν Ἀλκιβιάδην.</div>
+      <div class="it">E da ogni parte il sospetto si era ormai addensato attorno ad Alcibiade.</div>
+    </div>
+
+    <div class="row">
+      <div class="gr">Ὥστε βουλόμενοι αὐτὸν ἐς κρίσιν ἀγαγόντες ἀποκτεῖναι, πέμπουσιν οὕτω τὴν Σαλαμινίαν ναῦν ἐς τὴν Σικελίαν ἐπί τε ἐκεῖνον καὶ ὧν πέρι ἄλλων ἐμεμήνυτο.</div>
+      <div class="it">Cosicché, volendo condurlo in giudizio e metterlo a morte, mandano — in questo clima — la nave Salaminia in Sicilia, per lui e per gli altri sui quali era stata sporta denuncia.</div>
+    </div>
+
+    <div class="row">
+      <div class="gr">Εἴρητο δὲ προειπεῖν αὐτῷ ἀπολογησομένῳ ἀκολουθεῖν, ξυλλαμβάνειν δὲ μή, θεραπεύοντες τό τε πρὸς τοὺς ἐν τῇ Σικελίᾳ στρατιώτας τε σφετέρους καὶ πολεμίους μὴ θορυβεῖν καὶ οὐχ ἥκιστα τοὺς Μαντινέας καὶ Ἀργείους βουλόμενοι παραμεῖναι, δι᾽ ἐκείνου νομίζοντες πεισθῆναι σφίσι ξυστρατεύειν.</div>
+      <div class="it">Era stato però ordinato di intimargli di seguire la nave per difendersi in giudizio, ma di non arrestarlo: si aveva cura di non mettere in agitazione i propri soldati e i nemici in Sicilia, e soprattutto si voleva che i Mantineesi e gli Argivi restassero, poiché si riteneva che fosse stato proprio lui a persuaderli a partecipare alla spedizione al loro fianco.</div>
+    </div>
+
+    <div class="row">
+      <div class="gr">Καὶ ὁ μὲν ἔχων τὴν ἑαυτοῦ ναῦν καὶ οἱ ξυνδιαβεβλημένοι ἀπέπλεον μετὰ τῆς Σαλαμινίας ἐκ τῆς Σικελίας ὡς ἐς τὰς Ἀθήνας·</div>
+      <div class="it">E lui, con la propria nave, insieme ai coimputati, salpava dalla Sicilia al seguito della Salaminia, come diretto ad Atene;</div>
+    </div>
+
+    <div class="row">
+      <div class="gr">καὶ ἐπειδὴ ἐγένοντο ἐν Θουρίοις, οὐκέτι ξυνείποντο, ἀλλ᾽ ἀπελθόντες ἀπὸ τῆς νεὼς οὐ φανεροὶ ἦσαν, δείσαντες τὸ ἐπὶ διαβολῇ ἐς δίκην καταπλεῦσαι.</div>
+      <div class="it">e quando furono a Turii, non la seguirono più: scesi dalla nave, si resero irreperibili, temendo di rientrare per mare al processo sotto il peso della calunnia.</div>
+    </div>
+
+    <div class="row">
+      <div class="gr">Οἱ δ᾽ ἐκ τῆς Σαλαμινίας τέως μὲν ἐζήτουν τὸν Ἀλκιβιάδην καὶ τοὺς μετ᾽ αὐτοῦ· ὡς δ᾽ οὐδαμοῦ φανεροὶ ἦσαν, ᾤχοντο ἀποπλέοντες.</div>
+      <div class="it">Quelli della Salaminia per un po&rsquo; cercarono Alcibiade e i suoi compagni; ma poiché non si vedevano da nessuna parte, ripartirono per mare.</div>
+    </div>
+
+    <div class="row">
+      <div class="gr">Ὁ δὲ Ἀλκιβιάδης ἤδη φυγὰς ὢν οὐ πολὺ ὕστερον ἐπὶ πλοίου ἐπεραιώθη ἐς Πελοπόννησον ἐκ τῆς Θουρίας· οἱ δ᾽ Ἀθηναῖοι ἐρήμῃ δίκῃ θάνατον κατέγνωσαν αὐτοῦ τε καὶ τῶν μετ᾽ ἐκείνου.</div>
+      <div class="it">Alcibiade, ormai esule, non molto dopo passò su una nave mercantile dal territorio di Turii nel Peloponneso; e gli Ateniesi, con un processo in contumacia, condannarono a morte lui e i suoi compagni.</div>
+    </div>
+  </section>
+
+  <!-- ===================== T107 ===================== -->
+  <section class="testo">
+    <div class="texthead"><span class="tbadge">T107</span><h2>L&rsquo;infelicità del tiranno</h2></div>
+    <p class="fonte"><b>Fonte</b> Senofonte, <i>Ierone</i> (2, 2&ndash;8) &nbsp;&middot;&nbsp; <b>Costrutti</b> proposizione dichiarativa, infinitiva, interrogativa indiretta, relativa, periodo ipotetico; usi di ὡς e di ἄν</p>
+    <p class="argomento">Ierone spiega al poeta Simonide che la condizione del tiranno è ben meno invidiabile di quanto si creda comunemente.</p>
+
+    <div class="colhead"><span>Testo greco</span><span>Traduzione</span></div>
+
+    <div class="row">
+      <div class="gr">Ἀλλὰ τὸ μὲν τὸ πλῆθος τῶν ἀνθρώπων, ὦ Σιμωνίδη, ἐξαπατᾶσθαι ὑπὸ τῆς τυραννίδος οὐδέν τι θαυμάζω· μάλα γὰρ ὁ ὄχλος μοι δοκεῖ δοξάζειν ὁρῶν καὶ εὐδαίμονάς τινας εἶναι καὶ ἀθλίους·</div>
+      <div class="it">Ma che la massa degli uomini, o Simonide, sia tratta in inganno dalla tirannide, non mi stupisce affatto: la folla, infatti, mi pare giudicare solo con gli occhi chi sia felice e chi infelice;</div>
+    </div>
+
+    <div class="row">
+      <div class="gr">ἡ δὲ τυραννὶς τὰ μὲν δοκοῦντα πολλοῦ ἄξια κτήματα εἶναι ἀνεπτυγμένα θεᾶσθαι φανερὰ πᾶσι παρέχεται, τὰ δὲ χαλεπὰ ἐν ταῖς ψυχαῖς τῶν τυράννων κέκτηται ἀποκεκρυμμένα, ἔνθαπερ καὶ τὸ εὐδαιμονεῖν καὶ τὸ κακοδαιμονεῖν τοῖς ἀνθρώποις ἀπόκειται.</div>
+      <div class="it">la tirannide, invece, offre a tutti, ben dispiegati alla vista, i possessi che sembrano valere molto, ma tiene nascoste nelle anime dei tiranni le sue pene, proprio là dove per gli uomini è riposta la felicità e l&rsquo;infelicità.</div>
+    </div>
+
+    <div class="row">
+      <div class="gr">Τὸ μὲν οὖν τὸ πλῆθος περὶ τούτου λεληθέναι, ὥσπερ εἶπον, οὐ θαυμάζω· τὸ δὲ καὶ ὑμᾶς ταῦτ᾽ ἀγνοεῖν, οἳ διὰ τῆς γνώμης δοκεῖτε θεᾶσθαι κάλλιον ἢ διὰ τῶν ὀφθαλμῶν τὰ πλεῖστα τῶν πραγμάτων, τοῦτό μοι δοκεῖ θαυμαστὸν εἶναι.</div>
+      <div class="it">Che dunque la massa sia all&rsquo;oscuro di questo, come ho detto, non mi stupisce; ma che lo ignoriate anche voi, che avete fama di osservare col pensiero, meglio che con gli occhi, la maggior parte delle cose — questo sì mi pare sorprendente.</div>
+    </div>
+
+    <div class="row">
+      <div class="gr">Ἐγὼ δὲ πεπειραμένος σαφῶς οἶδα, ὦ Σιμωνίδη, καὶ λέγω σοι ὅτι οἱ τύραννοι τῶν μεγίστων ἀγαθῶν ἐλάχιστα μετέχουσι, τῶν δὲ μεγίστων κακῶν πλεῖστα κέκτηνται.</div>
+      <div class="it">Io invece, per averne fatto esperienza, lo so con certezza, o Simonide, e ti dico che i tiranni hanno pochissima parte dei beni più grandi e posseggono in larghissima misura i mali più grandi.</div>
+    </div>
+
+    <div class="row">
+      <div class="gr">Αὐτίκα γὰρ εἰ μὲν εἰρήνη δοκεῖ μέγα ἀγαθὸν τοῖς ἀνθρώποις εἶναι, ταύτης ἐλάχιστον τοῖς τυράννοις μέτεστιν· εἰ δὲ πόλεμος μέγα κακόν, τούτου πλεῖστον μέρος οἱ τύραννοι μετέχουσιν.</div>
+      <div class="it">Un esempio immediato: se la pace sembra agli uomini un gran bene, ai tiranni ne tocca una parte minima; se la guerra è un gran male, di essa i tiranni hanno la parte più grande.</div>
+    </div>
+
+    <div class="row">
+      <div class="gr">Εὐθὺς γὰρ τοῖς μὲν ἰδιώταις, ἂν μὴ ἡ πόλις αὐτῶν κοινὸν πόλεμον πολεμῇ, ἔξεστιν ὅποι ἂν βούλωνται πορεύεσθαι μηδὲν φοβουμένους μή τις αὐτοὺς ἀποκτείνῃ, οἱ δὲ τύραννοι πάντες πανταχῇ ὡς διὰ πολεμίας πορεύονται.</div>
+      <div class="it">Tanto per cominciare, infatti, ai privati cittadini — a meno che la loro città non combatta una guerra comune — è possibile recarsi dovunque vogliano senza temere che qualcuno li uccida; i tiranni, invece, si muovono tutti, dappertutto, come attraverso terra nemica.</div>
+    </div>
+
+    <p class="nota-apparato"><span class="gr-inline">ὁρῶν</span>: «utilizzando solo la vista» (nota 1 del manuale).</p>
+  </section>
+
+  <!-- ===================== T132 ===================== -->
+  <section class="testo">
+    <div class="texthead"><span class="tbadge">T132</span><h2>I poeti imitano le apparenze, ma non attingono la verità</h2></div>
+    <p class="fonte"><b>Fonte</b> Platone, <i>Repubblica</i> (X 600e&ndash;601b) &nbsp;&middot;&nbsp; <b>Costrutti</b> proposizione consecutiva, infinitiva, interrogativa, relativa, temporale</p>
+    <p class="argomento">Socrate istituisce un confronto tra la poesia e la pittura per dimostrare come entrambe ingannino i loro fruitori disegnando le apparenze, ma siano in realtà del tutto menzognere, basate come sono su un processo di mimesi.</p>
+
+    <div class="colhead"><span>Testo greco</span><span>Traduzione</span></div>
+
+    <div class="row">
+      <div class="gr">Οὐκοῦν τιθῶμεν ἀπὸ Ὁμήρου ἀρξαμένους πάντας τοὺς ποιητικοὺς μιμητὰς εἰδώλων ἀρετῆς εἶναι καὶ τῶν ἄλλων περὶ ὧν ποιοῦσιν, τῆς δὲ ἀληθείας οὐχ ἅπτεσθαι, ἀλλ᾽ ὥσπερ νυνδὴ ἐλέγομεν, ὁ ζωγράφος σκυτοτόμον ποιήσει δοκοῦντα εἶναι, αὐτός τε οὐκ ἐπαΐων περὶ σκυτοτομίας καὶ τοῖς μὴ ἐπαΐουσιν, ἐκ τῶν χρωμάτων δὲ καὶ σχημάτων θεωροῦσιν;</div>
+      <div class="it"><span class="chi">Socrate</span>«Dunque, non dobbiamo stabilire che tutti i poeti, a cominciare da Omero, sono imitatori di simulacri della virtù e delle altre cose su cui compongono, e non toccano la verità, ma — come dicevamo or ora — al modo del pittore, che farà un calzolaio dall&rsquo;apparenza vera pur non intendendosi di calzoleria, per gente che non se ne intende e giudica in base ai colori e alle forme?»</div>
+    </div>
+
+    <div class="row">
+      <div class="gr">Πάνυ μὲν οὖν.</div>
+      <div class="it"><span class="chi">Glaucone</span>«Certamente.»</div>
+    </div>
+
+    <div class="row">
+      <div class="gr">Οὕτω δὴ οἶμαι καὶ τὸν ποιητικὸν φήσομεν χρώματα ἄττα ἑκάστων τῶν τεχνῶν τοῖς ὀνόμασι καὶ ῥήμασιν ἐπιχρωματίζειν αὐτὸν οὐκ ἐπαΐοντα ἀλλ᾽ ἢ μιμεῖσθαι, ὥστε ἑτέροις τοιούτοις ἐκ τῶν λόγων θεωροῦσι δοκεῖν, ἐάντε περὶ σκυτοτομίας τις λέγῃ ἐν μέτρῳ καὶ ῥυθμῷ καὶ ἁρμονίᾳ, πάνυ εὖ δοκεῖν λέγεσθαι, ἐάντε περὶ στρατηγίας ἐάντε περὶ ἄλλου ὁτουοῦν· οὕτω φύσει αὐτὰ ταῦτα μεγάλην τινὰ κήλησιν ἔχειν.</div>
+      <div class="it"><span class="chi">Socrate</span>«Così dunque, credo, diremo che anche il poeta stende con nomi e verbi certi colori di ciascuna delle arti, senza intendersene se non quanto basta per imitare, sicché ad altri come lui, che giudicano dalle parole, sembra che si parli molto bene — sia che uno parli di calzoleria in metro, ritmo e armonia, sia di arte militare, sia di qualunque altra cosa: tanto grande è l&rsquo;incantamento che queste cose posseggono per natura.»</div>
+    </div>
+
+    <div class="row">
+      <div class="gr">Ἐπεὶ γυμνωθέντα γε τῶν τῆς μουσικῆς χρωμάτων τὰ τῶν ποιητῶν, αὐτὰ ἐφ᾽ αὑτῶν λεγόμενα, οἶμαί σε εἰδέναι οἷα φαίνεται. Τεθέασαι γάρ που.</div>
+      <div class="it"><span class="chi">Socrate</span>«Del resto, quando le opere dei poeti siano spogliate dei colori della musica e vengano recitate da sole, per se stesse, credo che tu sappia che figura fanno. Le avrai certo osservate.»</div>
+    </div>
+
+    <div class="row">
+      <div class="gr">Ἔγωγ᾽, ἔφη.</div>
+      <div class="it"><span class="chi">Glaucone</span>«Io sì», disse.</div>
+    </div>
+
+    <div class="row">
+      <div class="gr">Οὐκοῦν, ἦν δ᾽ ἐγώ, ἔοικεν τοῖς τῶν ὡραίων προσώποις, καλῶν δὲ μή, οἷα γίγνεται ἰδεῖν ὅταν αὐτὰ τὸ ἄνθος προλίπῃ;</div>
+      <div class="it"><span class="chi">Socrate</span>«E allora — dissi io — non assomigliano forse ai volti di chi è nel fiore degli anni ma non è bello, quali si presentano alla vista quando il fiore della giovinezza li abbandona?»</div>
+    </div>
+
+    <div class="row">
+      <div class="gr">Παντάπασιν, ἦ δ᾽ ὅς.</div>
+      <div class="it"><span class="chi">Glaucone</span>«Assolutamente», disse.</div>
+    </div>
+
+    <div class="row">
+      <div class="gr">Ἴθι δή, τόδε ἄθρει· ὁ τοῦ εἰδώλου ποιητής, ὁ μιμητής, φαμέν, τοῦ μὲν ὄντος οὐδὲν ἐπαΐει, τοῦ δὲ φαινομένου.</div>
+      <div class="it"><span class="chi">Socrate</span>«Orsù dunque, considera questo: il creatore del simulacro, l&rsquo;imitatore — diciamo — non capisce nulla di ciò che è, ma solo di ciò che appare.»</div>
+    </div>
+  </section>
+
+  <footer class="colophon">
+    Testo a fronte a uso didattico. La segmentazione segue i periodi del testo greco; la traduzione riprende la resa continua della dispensa interlineare (stessi criteri, stessa terminologia).
+  </footer>
+</div>
+
+</body>
+</html>
