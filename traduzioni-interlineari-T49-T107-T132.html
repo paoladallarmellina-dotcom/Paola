@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>Versioni interlineari greche</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gentium+Book+Plus:ital,wght@0,400;0,700;1,400;1,700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400;1,500&display=swap">
+<style>
+  :root {
+    --paper: #FAF8F4;
+    --ink: #26241F;
+    --ink-soft: #57534A;
+    --accent: #2B5E75;
+    --accent-soft: #EAF0F2;
+    --gloss: #8A5A3C;
+    --rule: #E2DDD3;
+    --resa-bg: #F3F0E9;
+    --badge-ink: #FAF8F4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #16191D;
+      --ink: #E6E2D9;
+      --ink-soft: #A9A398;
+      --accent: #7FB3C8;
+      --accent-soft: #1E2A31;
+      --gloss: #C89A76;
+      --rule: #2C3138;
+      --resa-bg: #1C2025;
+      --badge-ink: #10141A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #16191D;
+    --ink: #E6E2D9;
+    --ink-soft: #A9A398;
+    --accent: #7FB3C8;
+    --accent-soft: #1E2A31;
+    --gloss: #C89A76;
+    --rule: #2C3138;
+    --resa-bg: #1C2025;
+    --badge-ink: #10141A;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Gentium Book Plus", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    line-height: 1.55;
+    margin: 0;
+    padding: 2.5rem 1.25rem 4rem;
+  }
+  .page { max-width: 46rem; margin: 0 auto; }
+
+  header.masthead { border-bottom: 3px double var(--accent); padding-bottom: 1.1rem; margin-bottom: .9rem; }
+  .masthead .kicker {
+    font-family: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+    font-size: .72rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 .35rem;
+  }
+  .masthead h1 { font-size: 1.9rem; font-weight: 700; margin: 0 0 .3rem; text-wrap: balance; }
+  .masthead p.sub {
+    font-family: "Alegreya Sans", system-ui, sans-serif;
+    color: var(--ink-soft); margin: 0; font-size: .95rem;
+  }
+  .legenda {
+    font-family: "Alegreya Sans", system-ui, sans-serif;
+    font-size: .85rem; color: var(--ink-soft);
+    border: 1px solid var(--rule); border-radius: 6px;
+    padding: .7rem .9rem; margin: 0 0 2.2rem;
+  }
+  .legenda strong { color: var(--ink); font-weight: 700; }
+  .legenda .gr-sample { font-family: "Gentium Book Plus", serif; color: var(--ink); }
+  .legenda .tr-sample { color: var(--gloss); font-style: italic; }
+
+  section.testo { margin: 0 0 3.2rem; }
+  .texthead { display: flex; align-items: baseline; gap: .75rem; border-bottom: 2px solid var(--accent); padding-bottom: .4rem; margin-bottom: .35rem; }
+  .tbadge {
+    font-family: "Alegreya Sans", system-ui, sans-serif;
+    background: var(--accent); color: var(--badge-ink);
+    font-weight: 700; font-size: .95rem; letter-spacing: .02em;
+    padding: .1rem .55rem; border-radius: 4px; white-space: nowrap;
+  }
+  .texthead h2 { font-size: 1.35rem; margin: 0; font-weight: 700; text-wrap: balance; }
+  .fonte {
+    font-family: "Alegreya Sans", system-ui, sans-serif;
+    font-size: .82rem; color: var(--ink-soft); margin: .15rem 0 0;
+  }
+  .fonte b { color: var(--accent); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: .72rem; }
+  .fonte i { font-style: italic; }
+  .argomento {
+    font-family: "Alegreya Sans", system-ui, sans-serif;
+    font-size: .92rem; color: var(--ink-soft);
+    background: var(--accent-soft); border-radius: 6px;
+    padding: .65rem .9rem; margin: .8rem 0 1.4rem;
+  }
+
+  .sent { margin: 0 0 .4rem; }
+  .snum {
+    font-family: "Alegreya Sans", system-ui, sans-serif;
+    font-size: .7rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--accent); margin: 1.4rem 0 .3rem;
+  }
+  .inter { display: flex; flex-wrap: wrap; column-gap: 1.05rem; row-gap: .55rem; align-items: end; }
+  .u { display: flex; flex-direction: column; break-inside: avoid; }
+  .u .gr { font-size: 1.12rem; line-height: 1.25; }
+  .u .tr {
+    font-family: "Alegreya Sans", system-ui, sans-serif;
+    font-size: .74rem; line-height: 1.25; font-style: italic;
+    color: var(--gloss); max-width: 11rem;
+  }
+  .u .tr .note { font-style: normal; color: var(--ink-soft); }
+  .resa {
+    background: var(--resa-bg); border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    font-size: .98rem; font-style: italic;
+    padding: .55rem .85rem; margin: .75rem 0 0;
+  }
+  .resa::before {
+    content: "Traduzione";
+    display: block;
+    font-family: "Alegreya Sans", system-ui, sans-serif;
+    font-style: normal; font-weight: 700; font-size: .65rem;
+    letter-spacing: .16em; text-transform: uppercase; color: var(--accent);
+    margin-bottom: .15rem;
+  }
+  .battuta .inter { padding-left: 1.1rem; border-left: 2px solid var(--rule); }
+  .nota-apparato {
+    font-family: "Alegreya Sans", system-ui, sans-serif;
+    font-size: .8rem; color: var(--ink-soft);
+    border-top: 1px solid var(--rule); margin-top: 1.6rem; padding-top: .5rem;
+  }
+  .nota-apparato .gr-inline { font-family: "Gentium Book Plus", serif; font-size: .95rem; color: var(--ink); }
+
+  footer.colophon {
+    font-family: "Alegreya Sans", system-ui, sans-serif;
+    font-size: .78rem; color: var(--ink-soft);
+    border-top: 1px solid var(--rule); padding-top: .8rem; margin-top: 1rem;
+  }
+
+  @media print {
+    :root { --paper: #ffffff; }
+    body { padding: 0; font-size: 10.5pt; }
+    .page { max-width: 100%; }
+    section.testo { break-before: page; }
+    section.testo:first-of-type { break-before: auto; }
+    .sent { break-inside: avoid; }
+    .resa { break-inside: avoid; }
+  }
+</style>
+
+<div class="page">
+  <header class="masthead">
+    <p class="kicker">Greco &middot; versioni con traduzione interlineare</p>
+    <h1>Versioni interlineari greche</h1>
+    <p class="sub">T49 Tucidide &middot; T107 Senofonte &middot; T132 Platone — testo greco con resa letterale parola per parola e traduzione continua</p>
+  </header>
+
+  <div class="legenda">
+    <strong>Come leggere.</strong> Il testo greco è diviso in unità minime di senso; sotto ogni unità (<span class="gr-sample">ἡ τυραννίς</span> → <span class="tr-sample">la tirannide</span>) è data la resa letterale, con eventuali indicazioni grammaticali tra parentesi. Al termine di ogni periodo, la fascia «Traduzione» offre la resa continua in italiano corrente.
+  </div>
+
+  <!-- ===================== T49 ===================== -->
+  <section class="testo">
+    <div class="texthead"><span class="tbadge">T49</span><h2>Alcibiade è condannato in contumacia</h2></div>
+    <p class="fonte"><b>Fonte</b> Tucidide, <i>La guerra del Peloponneso</i> (VI 61) &nbsp;&middot;&nbsp; <b>Costrutti</b> usi del participio; proposizione consecutiva, temporale; usi di ὡς</p>
+    <p class="argomento">Mentre Alcibiade è impegnato nella campagna di Sicilia, i sospetti contro di lui, ad Atene, si fanno sempre più insistenti. Si decide di processarlo per metterlo a morte e una nave viene inviata per riportarlo in patria. Alcibiade la segue fino a un certo punto; poi però si dà alla fuga.</p>
+
+    <div class="sent">
+      <p class="snum">Periodo 1</p>
+      <div class="inter">
+        <span class="u"><span class="gr">Πανταχόθεν τε</span><span class="tr">e da ogni parte</span></span>
+        <span class="u"><span class="gr">περιειστήκει</span><span class="tr">si era addensato <span class="note">(ppf. di περιίστημι)</span></span></span>
+        <span class="u"><span class="gr">ὑποψία</span><span class="tr">il sospetto</span></span>
+        <span class="u"><span class="gr">ἐς τὸν Ἀλκιβιάδην.</span><span class="tr">contro Alcibiade</span></span>
+      </div>
+      <p class="resa">E da ogni parte il sospetto si era ormai addensato attorno ad Alcibiade.</p>
+    </div>
+
+    <div class="sent">
+      <p class="snum">Periodo 2</p>
+      <div class="inter">
+        <span class="u"><span class="gr">Ὥστε</span><span class="tr">cosicché <span class="note">(consecutiva)</span></span></span>
+        <span class="u"><span class="gr">βουλόμενοι</span><span class="tr">volendo</span></span>
+        <span class="u"><span class="gr">αὐτὸν</span><span class="tr">lui</span></span>
+        <span class="u"><span class="gr">ἐς κρίσιν</span><span class="tr">in giudizio</span></span>
+        <span class="u"><span class="gr">ἀγαγόντες</span><span class="tr">dopo averlo condotto <span class="note">(part. aor.)</span></span></span>
+        <span class="u"><span class="gr">ἀποκτεῖναι,</span><span class="tr">mettere a morte</span></span>
+        <span class="u"><span class="gr">πέμπουσιν</span><span class="tr">mandano <span class="note">(pres. storico)</span></span></span>
+        <span class="u"><span class="gr">οὕτω</span><span class="tr">così / in tali condizioni</span></span>
+        <span class="u"><span class="gr">τὴν Σαλαμινίαν ναῦν</span><span class="tr">la nave Salaminia</span></span>
+        <span class="u"><span class="gr">ἐς τὴν Σικελίαν</span><span class="tr">in Sicilia</span></span>
+        <span class="u"><span class="gr">ἐπί τε ἐκεῖνον</span><span class="tr">per lui <span class="note">(a prenderlo)</span></span></span>
+        <span class="u"><span class="gr">καὶ ὧν πέρι ἄλλων</span><span class="tr">e per gli altri, riguardo ai quali <span class="note">(anastrofe di περί)</span></span></span>
+        <span class="u"><span class="gr">ἐμεμήνυτο.</span><span class="tr">era stata sporta denuncia <span class="note">(ppf. pass. impers.)</span></span></span>
+      </div>
+      <p class="resa">Cosicché, volendo condurlo in giudizio e metterlo a morte, mandano — in questo clima — la nave Salaminia in Sicilia, per lui e per gli altri sui quali era stata sporta denuncia.</p>
+    </div>
+
+    <div class="sent">
+      <p class="snum">Periodo 3</p>
+      <div class="inter">
+        <span class="u"><span class="gr">Εἴρητο δὲ</span><span class="tr">era stato ordinato <span class="note">(ppf. pass.)</span></span></span>
+        <span class="u"><span class="gr">προειπεῖν</span><span class="tr">di intimare</span></span>
+        <span class="u"><span class="gr">αὐτῷ</span><span class="tr">a lui</span></span>
+        <span class="u"><span class="gr">ἀπολογησομένῳ</span><span class="tr">perché si difendesse <span class="note">(part. fut. finale)</span></span></span>
+        <span class="u"><span class="gr">ἀκολουθεῖν,</span><span class="tr">di seguire (la nave)</span></span>
+        <span class="u"><span class="gr">ξυλλαμβάνειν δὲ μή,</span><span class="tr">ma di non arrestarlo</span></span>
+        <span class="u"><span class="gr">θεραπεύοντες</span><span class="tr">avendo cura</span></span>
+        <span class="u"><span class="gr">τό τε … μὴ θορυβεῖν</span><span class="tr">di non mettere in agitazione</span></span>
+        <span class="u"><span class="gr">πρὸς τοὺς ἐν τῇ Σικελίᾳ</span><span class="tr">nei rapporti con quelli in Sicilia</span></span>
+        <span class="u"><span class="gr">στρατιώτας τε σφετέρους</span><span class="tr">sia i propri soldati</span></span>
+        <span class="u"><span class="gr">καὶ πολεμίους</span><span class="tr">sia i nemici</span></span>
+        <span class="u"><span class="gr">καὶ οὐχ ἥκιστα</span><span class="tr">e soprattutto <span class="note">(litote)</span></span></span>
+        <span class="u"><span class="gr">τοὺς Μαντινέας καὶ Ἀργείους</span><span class="tr">i Mantineesi e gli Argivi</span></span>
+        <span class="u"><span class="gr">βουλόμενοι παραμεῖναι,</span><span class="tr">volendo che restassero</span></span>
+        <span class="u"><span class="gr">δι᾽ ἐκείνου</span><span class="tr">per mezzo di lui</span></span>
+        <span class="u"><span class="gr">νομίζοντες</span><span class="tr">ritenendo</span></span>
+        <span class="u"><span class="gr">πεισθῆναι σφίσι</span><span class="tr">che fossero stati persuasi in loro favore</span></span>
+        <span class="u"><span class="gr">ξυστρατεύειν.</span><span class="tr">a partecipare alla spedizione</span></span>
+      </div>
+      <p class="resa">Era stato però ordinato di intimargli di seguire la nave per difendersi in giudizio, ma di non arrestarlo: si aveva cura di non mettere in agitazione i propri soldati e i nemici in Sicilia, e soprattutto si voleva che i Mantineesi e gli Argivi restassero, poiché si riteneva che fosse stato proprio lui a persuaderli a partecipare alla spedizione al loro fianco.</p>
+    </div>
+
+    <div class="sent">
+      <p class="snum">Periodo 4</p>
+      <div class="inter">
+        <span class="u"><span class="gr">Καὶ ὁ μὲν</span><span class="tr">e lui (Alcibiade)</span></span>
+        <span class="u"><span class="gr">ἔχων τὴν ἑαυτοῦ ναῦν</span><span class="tr">con la propria nave</span></span>
+        <span class="u"><span class="gr">καὶ οἱ ξυνδιαβεβλημένοι</span><span class="tr">e i coimputati <span class="note">(part. pf. pass.)</span></span></span>
+        <span class="u"><span class="gr">ἀπέπλεον</span><span class="tr">salpavano via</span></span>
+        <span class="u"><span class="gr">μετὰ τῆς Σαλαμινίας</span><span class="tr">insieme alla Salaminia</span></span>
+        <span class="u"><span class="gr">ἐκ τῆς Σικελίας</span><span class="tr">dalla Sicilia</span></span>
+        <span class="u"><span class="gr">ὡς ἐς τὰς Ἀθήνας·</span><span class="tr">come alla volta di Atene <span class="note">(ὡς = apparenza)</span></span></span>
+      </div>
+      <p class="resa">E lui, con la propria nave, insieme ai coimputati, salpava dalla Sicilia al seguito della Salaminia, come diretto ad Atene.</p>
+    </div>
+
+    <div class="sent">
+      <p class="snum">Periodo 5</p>
+      <div class="inter">
+        <span class="u"><span class="gr">καὶ ἐπειδὴ</span><span class="tr">e quando <span class="note">(temporale)</span></span></span>
+        <span class="u"><span class="gr">ἐγένοντο ἐν Θουρίοις,</span><span class="tr">giunsero a Turii</span></span>
+        <span class="u"><span class="gr">οὐκέτι ξυνείποντο,</span><span class="tr">non seguivano più</span></span>
+        <span class="u"><span class="gr">ἀλλ᾽ ἀπελθόντες</span><span class="tr">ma, allontanatisi</span></span>
+        <span class="u"><span class="gr">ἀπὸ τῆς νεὼς</span><span class="tr">dalla nave</span></span>
+        <span class="u"><span class="gr">οὐ φανεροὶ ἦσαν,</span><span class="tr">si resero irreperibili <span class="note">(lett. non erano visibili)</span></span></span>
+        <span class="u"><span class="gr">δείσαντες</span><span class="tr">temendo</span></span>
+        <span class="u"><span class="gr">τὸ ἐπὶ διαβολῇ</span><span class="tr">il, sotto il peso della calunnia,</span></span>
+        <span class="u"><span class="gr">ἐς δίκην καταπλεῦσαι.</span><span class="tr">tornare per mare al processo <span class="note">(inf. sostantivato)</span></span></span>
+      </div>
+      <p class="resa">E quando furono a Turii, non la seguirono più: scesi dalla nave, si resero irreperibili, temendo di rientrare per mare al processo sotto il peso della calunnia.</p>
+    </div>
+
+    <div class="sent">
+      <p class="snum">Periodo 6</p>
+      <div class="inter">
+        <span class="u"><span class="gr">Οἱ δ᾽ ἐκ τῆς Σαλαμινίας</span><span class="tr">quelli della Salaminia</span></span>
+        <span class="u"><span class="gr">τέως μὲν</span><span class="tr">per un certo tempo</span></span>
+        <span class="u"><span class="gr">ἐζήτουν</span><span class="tr">cercavano</span></span>
+        <span class="u"><span class="gr">τὸν Ἀλκιβιάδην</span><span class="tr">Alcibiade</span></span>
+        <span class="u"><span class="gr">καὶ τοὺς μετ᾽ αὐτοῦ·</span><span class="tr">e quelli con lui</span></span>
+        <span class="u"><span class="gr">ὡς δ᾽</span><span class="tr">ma poiché <span class="note">(ὡς causale)</span></span></span>
+        <span class="u"><span class="gr">οὐδαμοῦ φανεροὶ ἦσαν,</span><span class="tr">non comparivano da nessuna parte</span></span>
+        <span class="u"><span class="gr">ᾤχοντο ἀποπλέοντες.</span><span class="tr">se ne andarono salpando</span></span>
+      </div>
+      <p class="resa">Quelli della Salaminia per un po' cercarono Alcibiade e i suoi compagni; ma poiché non si vedevano da nessuna parte, ripartirono per mare.</p>
+    </div>
+
+    <div class="sent">
+      <p class="snum">Periodo 7</p>
+      <div class="inter">
+        <span class="u"><span class="gr">Ὁ δὲ Ἀλκιβιάδης</span><span class="tr">Alcibiade</span></span>
+        <span class="u"><span class="gr">ἤδη φυγὰς ὢν</span><span class="tr">essendo ormai un esule</span></span>
+        <span class="u"><span class="gr">οὐ πολὺ ὕστερον</span><span class="tr">non molto dopo</span></span>
+        <span class="u"><span class="gr">ἐπὶ πλοίου</span><span class="tr">su una nave (mercantile)</span></span>
+        <span class="u"><span class="gr">ἐπεραιώθη</span><span class="tr">passò <span class="note">(aor. pass.)</span></span></span>
+        <span class="u"><span class="gr">ἐς Πελοπόννησον</span><span class="tr">nel Peloponneso</span></span>
+        <span class="u"><span class="gr">ἐκ τῆς Θουρίας·</span><span class="tr">dal territorio di Turii</span></span>
+        <span class="u"><span class="gr">οἱ δ᾽ Ἀθηναῖοι</span><span class="tr">gli Ateniesi</span></span>
+        <span class="u"><span class="gr">ἐρήμῃ δίκῃ</span><span class="tr">con processo in contumacia</span></span>
+        <span class="u"><span class="gr">θάνατον κατέγνωσαν</span><span class="tr">pronunciarono condanna a morte</span></span>
+        <span class="u"><span class="gr">αὐτοῦ τε</span><span class="tr">di lui <span class="note">(gen. con καταγιγνώσκω)</span></span></span>
+        <span class="u"><span class="gr">καὶ τῶν μετ᾽ ἐκείνου.</span><span class="tr">e di quelli con lui</span></span>
+      </div>
+      <p class="resa">Alcibiade, ormai esule, non molto dopo passò su una nave mercantile dal territorio di Turii nel Peloponneso; e gli Ateniesi, con un processo in contumacia, condannarono a morte lui e i suoi compagni.</p>
+    </div>
+  </section>
+
+  <!-- ===================== T107 ===================== -->
+  <section class="testo">
+    <div class="texthead"><span class="tbadge">T107</span><h2>L&rsquo;infelicità del tiranno</h2></div>
+    <p class="fonte"><b>Fonte</b> Senofonte, <i>Ierone</i> (2, 2&ndash;8) &nbsp;&middot;&nbsp; <b>Costrutti</b> proposizione dichiarativa, infinitiva, interrogativa indiretta, relativa, periodo ipotetico; usi di ὡς e di ἄν</p>
+    <p class="argomento">Ierone spiega al poeta Simonide che la condizione del tiranno è ben meno invidiabile di quanto si creda comunemente.</p>
+
+    <div class="sent">
+      <p class="snum">Periodo 1</p>
+      <div class="inter">
+        <span class="u"><span class="gr">Ἀλλὰ τὸ μὲν</span><span class="tr">ma il fatto che <span class="note">(art. + infinitiva)</span></span></span>
+        <span class="u"><span class="gr">τὸ πλῆθος τῶν ἀνθρώπων,</span><span class="tr">la massa degli uomini</span></span>
+        <span class="u"><span class="gr">ὦ Σιμωνίδη,</span><span class="tr">o Simonide</span></span>
+        <span class="u"><span class="gr">ἐξαπατᾶσθαι</span><span class="tr">sia tratta in inganno</span></span>
+        <span class="u"><span class="gr">ὑπὸ τῆς τυραννίδος</span><span class="tr">dalla tirannide</span></span>
+        <span class="u"><span class="gr">οὐδέν τι θαυμάζω·</span><span class="tr">non mi stupisce affatto</span></span>
+        <span class="u"><span class="gr">μάλα γὰρ</span><span class="tr">infatti proprio</span></span>
+        <span class="u"><span class="gr">ὁ ὄχλος</span><span class="tr">la folla</span></span>
+        <span class="u"><span class="gr">μοι δοκεῖ</span><span class="tr">mi sembra</span></span>
+        <span class="u"><span class="gr">δοξάζειν</span><span class="tr">giudicare per opinione</span></span>
+        <span class="u"><span class="gr">ὁρῶν</span><span class="tr">utilizzando solo la vista <span class="note">(nota del manuale)</span></span></span>
+        <span class="u"><span class="gr">καὶ εὐδαίμονάς τινας εἶναι</span><span class="tr">che alcuni siano felici</span></span>
+        <span class="u"><span class="gr">καὶ ἀθλίους·</span><span class="tr">e (altri) infelici</span></span>
+      </div>
+      <p class="resa">Ma che la massa degli uomini, o Simonide, sia tratta in inganno dalla tirannide, non mi stupisce affatto: la folla, infatti, mi pare giudicare solo con gli occhi chi sia felice e chi infelice.</p>
+    </div>
+
+    <div class="sent">
+      <p class="snum">Periodo 2</p>
+      <div class="inter">
+        <span class="u"><span class="gr">ἡ δὲ τυραννὶς</span><span class="tr">la tirannide, invece,</span></span>
+        <span class="u"><span class="gr">τὰ μὲν δοκοῦντα</span><span class="tr">i beni che sembrano</span></span>
+        <span class="u"><span class="gr">πολλοῦ ἄξια</span><span class="tr">di gran valore <span class="note">(gen. di stima)</span></span></span>
+        <span class="u"><span class="gr">κτήματα εἶναι</span><span class="tr">essere possessi</span></span>
+        <span class="u"><span class="gr">ἀνεπτυγμένα</span><span class="tr">bene spiegati in mostra</span></span>
+        <span class="u"><span class="gr">θεᾶσθαι</span><span class="tr">da contemplare</span></span>
+        <span class="u"><span class="gr">φανερὰ</span><span class="tr">in piena vista</span></span>
+        <span class="u"><span class="gr">πᾶσι παρέχεται,</span><span class="tr">offre a tutti</span></span>
+        <span class="u"><span class="gr">τὰ δὲ χαλεπὰ</span><span class="tr">le sue pene, invece,</span></span>
+        <span class="u"><span class="gr">ἐν ταῖς ψυχαῖς τῶν τυράννων</span><span class="tr">nelle anime dei tiranni</span></span>
+        <span class="u"><span class="gr">κέκτηται</span><span class="tr">le tiene <span class="note">(pf. di κτάομαι)</span></span></span>
+        <span class="u"><span class="gr">ἀποκεκρυμμένα,</span><span class="tr">nascoste</span></span>
+        <span class="u"><span class="gr">ἔνθαπερ</span><span class="tr">proprio là dove</span></span>
+        <span class="u"><span class="gr">καὶ τὸ εὐδαιμονεῖν</span><span class="tr">sia l&rsquo;essere felici</span></span>
+        <span class="u"><span class="gr">καὶ τὸ κακοδαιμονεῖν</span><span class="tr">sia l&rsquo;essere infelici</span></span>
+        <span class="u"><span class="gr">τοῖς ἀνθρώποις</span><span class="tr">per gli uomini</span></span>
+        <span class="u"><span class="gr">ἀπόκειται.</span><span class="tr">è riposto</span></span>
+      </div>
+      <p class="resa">La tirannide offre a tutti, ben dispiegati alla vista, i possessi che sembrano valere molto; ma tiene nascoste nelle anime dei tiranni le sue pene, proprio là dove per gli uomini è riposta la felicità e l&rsquo;infelicità.</p>
+    </div>
+
+    <div class="sent">
+      <p class="snum">Periodo 3</p>
+      <div class="inter">
+        <span class="u"><span class="gr">Τὸ μὲν οὖν</span><span class="tr">dunque il fatto che</span></span>
+        <span class="u"><span class="gr">τὸ πλῆθος</span><span class="tr">la massa</span></span>
+        <span class="u"><span class="gr">περὶ τούτου</span><span class="tr">su questo</span></span>
+        <span class="u"><span class="gr">λεληθέναι,</span><span class="tr">sia all&rsquo;oscuro <span class="note">(inf. pf. di λανθάνω)</span></span></span>
+        <span class="u"><span class="gr">ὥσπερ εἶπον,</span><span class="tr">come ho detto</span></span>
+        <span class="u"><span class="gr">οὐ θαυμάζω·</span><span class="tr">non mi stupisce</span></span>
+        <span class="u"><span class="gr">τὸ δὲ</span><span class="tr">ma il fatto che</span></span>
+        <span class="u"><span class="gr">καὶ ὑμᾶς</span><span class="tr">anche voi</span></span>
+        <span class="u"><span class="gr">ταῦτ᾽ ἀγνοεῖν,</span><span class="tr">ignoriate queste cose</span></span>
+        <span class="u"><span class="gr">οἳ</span><span class="tr">voi che <span class="note">(relativa)</span></span></span>
+        <span class="u"><span class="gr">διὰ τῆς γνώμης</span><span class="tr">con il pensiero</span></span>
+        <span class="u"><span class="gr">δοκεῖτε θεᾶσθαι</span><span class="tr">avete fama di osservare</span></span>
+        <span class="u"><span class="gr">κάλλιον ἢ</span><span class="tr">meglio che</span></span>
+        <span class="u"><span class="gr">διὰ τῶν ὀφθαλμῶν</span><span class="tr">con gli occhi</span></span>
+        <span class="u"><span class="gr">τὰ πλεῖστα τῶν πραγμάτων,</span><span class="tr">la maggior parte delle cose</span></span>
+        <span class="u"><span class="gr">τοῦτό μοι δοκεῖ</span><span class="tr">questo mi sembra</span></span>
+        <span class="u"><span class="gr">θαυμαστὸν εἶναι.</span><span class="tr">essere sorprendente</span></span>
+      </div>
+      <p class="resa">Che dunque la massa sia all&rsquo;oscuro di questo, come ho detto, non mi stupisce; ma che lo ignoriate anche voi, che avete fama di osservare col pensiero, meglio che con gli occhi, la maggior parte delle cose — questo sì mi pare sorprendente.</p>
+    </div>
+
+    <div class="sent">
+      <p class="snum">Periodo 4</p>
+      <div class="inter">
+        <span class="u"><span class="gr">Ἐγὼ δὲ</span><span class="tr">io invece</span></span>
+        <span class="u"><span class="gr">πεπειραμένος</span><span class="tr">per averne fatto esperienza <span class="note">(part. pf.)</span></span></span>
+        <span class="u"><span class="gr">σαφῶς οἶδα,</span><span class="tr">so con certezza</span></span>
+        <span class="u"><span class="gr">ὦ Σιμωνίδη,</span><span class="tr">o Simonide</span></span>
+        <span class="u"><span class="gr">καὶ λέγω σοι</span><span class="tr">e ti dico</span></span>
+        <span class="u"><span class="gr">ὅτι</span><span class="tr">che <span class="note">(dichiarativa)</span></span></span>
+        <span class="u"><span class="gr">οἱ τύραννοι</span><span class="tr">i tiranni</span></span>
+        <span class="u"><span class="gr">τῶν μεγίστων ἀγαθῶν</span><span class="tr">dei beni più grandi</span></span>
+        <span class="u"><span class="gr">ἐλάχιστα μετέχουσι,</span><span class="tr">partecipano in minima parte</span></span>
+        <span class="u"><span class="gr">τῶν δὲ μεγίστων κακῶν</span><span class="tr">e dei mali più grandi</span></span>
+        <span class="u"><span class="gr">πλεῖστα κέκτηνται.</span><span class="tr">posseggono la parte maggiore</span></span>
+      </div>
+      <p class="resa">Io invece, per averne fatto esperienza, lo so con certezza, o Simonide, e ti dico che i tiranni hanno pochissima parte dei beni più grandi e posseggono in larghissima misura i mali più grandi.</p>
+    </div>
+
+    <div class="sent">
+      <p class="snum">Periodo 5</p>
+      <div class="inter">
+        <span class="u"><span class="gr">Αὐτίκα γὰρ</span><span class="tr">per esempio, subito:</span></span>
+        <span class="u"><span class="gr">εἰ μὲν εἰρήνη</span><span class="tr">se da un lato la pace</span></span>
+        <span class="u"><span class="gr">δοκεῖ</span><span class="tr">sembra</span></span>
+        <span class="u"><span class="gr">μέγα ἀγαθὸν</span><span class="tr">un gran bene</span></span>
+        <span class="u"><span class="gr">τοῖς ἀνθρώποις εἶναι,</span><span class="tr">essere per gli uomini</span></span>
+        <span class="u"><span class="gr">ταύτης</span><span class="tr">di essa</span></span>
+        <span class="u"><span class="gr">ἐλάχιστον</span><span class="tr">una parte minima</span></span>
+        <span class="u"><span class="gr">τοῖς τυράννοις μέτεστιν·</span><span class="tr">tocca ai tiranni <span class="note">(μέτεστι + gen. e dat.)</span></span></span>
+        <span class="u"><span class="gr">εἰ δὲ πόλεμος</span><span class="tr">se dall&rsquo;altro la guerra</span></span>
+        <span class="u"><span class="gr">μέγα κακόν,</span><span class="tr">(è) un gran male</span></span>
+        <span class="u"><span class="gr">τούτου</span><span class="tr">di questa</span></span>
+        <span class="u"><span class="gr">πλεῖστον μέρος</span><span class="tr">la parte più grande</span></span>
+        <span class="u"><span class="gr">οἱ τύραννοι μετέχουσιν.</span><span class="tr">hanno i tiranni</span></span>
+      </div>
+      <p class="resa">Un esempio immediato: se la pace sembra agli uomini un gran bene, ai tiranni ne tocca una parte minima; se la guerra è un gran male, di essa i tiranni hanno la parte più grande.</p>
+    </div>
+
+    <div class="sent">
+      <p class="snum">Periodo 6</p>
+      <div class="inter">
+        <span class="u"><span class="gr">Εὐθὺς γὰρ</span><span class="tr">tanto per cominciare, infatti,</span></span>
+        <span class="u"><span class="gr">τοῖς μὲν ἰδιώταις,</span><span class="tr">ai privati cittadini</span></span>
+        <span class="u"><span class="gr">ἂν μὴ</span><span class="tr">a meno che non <span class="note">(periodo ipotetico dell&rsquo;eventualità)</span></span></span>
+        <span class="u"><span class="gr">ἡ πόλις αὐτῶν</span><span class="tr">la loro città</span></span>
+        <span class="u"><span class="gr">κοινὸν πόλεμον</span><span class="tr">una guerra comune</span></span>
+        <span class="u"><span class="gr">πολεμῇ,</span><span class="tr">combatta <span class="note">(cong.)</span></span></span>
+        <span class="u"><span class="gr">ἔξεστιν</span><span class="tr">è possibile</span></span>
+        <span class="u"><span class="gr">ὅποι ἂν βούλωνται</span><span class="tr">dovunque vogliano <span class="note">(relativa eventuale)</span></span></span>
+        <span class="u"><span class="gr">πορεύεσθαι</span><span class="tr">recarsi</span></span>
+        <span class="u"><span class="gr">μηδὲν φοβουμένους</span><span class="tr">senza temere nulla</span></span>
+        <span class="u"><span class="gr">μή τις αὐτοὺς ἀποκτείνῃ,</span><span class="tr">che qualcuno li uccida <span class="note">(completiva di timore)</span></span></span>
+        <span class="u"><span class="gr">οἱ δὲ τύραννοι πάντες</span><span class="tr">tutti i tiranni invece</span></span>
+        <span class="u"><span class="gr">πανταχῇ</span><span class="tr">dappertutto</span></span>
+        <span class="u"><span class="gr">ὡς διὰ πολεμίας</span><span class="tr">come attraverso terra nemica <span class="note">(ὡς comparativo)</span></span></span>
+        <span class="u"><span class="gr">πορεύονται.</span><span class="tr">si muovono</span></span>
+      </div>
+      <p class="resa">Tanto per cominciare, infatti, ai privati cittadini — a meno che la loro città non combatta una guerra comune — è possibile recarsi dovunque vogliano senza temere che qualcuno li uccida; i tiranni, invece, si muovono tutti, dappertutto, come attraverso terra nemica.</p>
+    </div>
+
+    <p class="nota-apparato"><span class="gr-inline">ὁρῶν</span>: «utilizzando solo la vista» (nota 1 del manuale).</p>
+  </section>
+
+  <!-- ===================== T132 ===================== -->
+  <section class="testo">
+    <div class="texthead"><span class="tbadge">T132</span><h2>I poeti imitano le apparenze, ma non attingono la verità</h2></div>
+    <p class="fonte"><b>Fonte</b> Platone, <i>Repubblica</i> (X 600e&ndash;601b) &nbsp;&middot;&nbsp; <b>Costrutti</b> proposizione consecutiva, infinitiva, interrogativa, relativa, temporale</p>
+    <p class="argomento">Socrate istituisce un confronto tra la poesia e la pittura per dimostrare come entrambe ingannino i loro fruitori disegnando le apparenze, ma siano in realtà del tutto menzognere, basate come sono su un processo di mimesi.</p>
+
+    <div class="sent">
+      <p class="snum">Periodo 1 &middot; Socrate</p>
+      <div class="inter">
+        <span class="u"><span class="gr">Οὐκοῦν</span><span class="tr">dunque, (non è vero che)…?</span></span>
+        <span class="u"><span class="gr">τιθῶμεν</span><span class="tr">dobbiamo porre <span class="note">(cong. esortativo)</span></span></span>
+        <span class="u"><span class="gr">ἀπὸ Ὁμήρου</span><span class="tr">da Omero</span></span>
+        <span class="u"><span class="gr">ἀρξαμένους</span><span class="tr">cominciando <span class="note">(part. aor. medio)</span></span></span>
+        <span class="u"><span class="gr">πάντας τοὺς ποιητικοὺς</span><span class="tr">tutti i poeti</span></span>
+        <span class="u"><span class="gr">μιμητὰς εἰδώλων</span><span class="tr">imitatori di simulacri <span class="note">(predicativo)</span></span></span>
+        <span class="u"><span class="gr">ἀρετῆς εἶναι</span><span class="tr">di virtù essere</span></span>
+        <span class="u"><span class="gr">καὶ τῶν ἄλλων</span><span class="tr">e delle altre cose</span></span>
+        <span class="u"><span class="gr">περὶ ὧν ποιοῦσιν,</span><span class="tr">su cui compongono</span></span>
+        <span class="u"><span class="gr">τῆς δὲ ἀληθείας</span><span class="tr">mentre la verità <span class="note">(gen. con ἅπτομαι)</span></span></span>
+        <span class="u"><span class="gr">οὐχ ἅπτεσθαι,</span><span class="tr">non (la) toccano</span></span>
+        <span class="u"><span class="gr">ἀλλ᾽ ὥσπερ</span><span class="tr">ma, come</span></span>
+        <span class="u"><span class="gr">νυνδὴ ἐλέγομεν,</span><span class="tr">dicevamo or ora</span></span>
+        <span class="u"><span class="gr">ὁ ζωγράφος</span><span class="tr">il pittore</span></span>
+        <span class="u"><span class="gr">σκυτοτόμον ποιήσει</span><span class="tr">farà un calzolaio</span></span>
+        <span class="u"><span class="gr">δοκοῦντα εἶναι,</span><span class="tr">che sembra essere (tale)</span></span>
+        <span class="u"><span class="gr">αὐτός τε</span><span class="tr">pur egli stesso</span></span>
+        <span class="u"><span class="gr">οὐκ ἐπαΐων</span><span class="tr">non intendendosene</span></span>
+        <span class="u"><span class="gr">περὶ σκυτοτομίας</span><span class="tr">di calzoleria</span></span>
+        <span class="u"><span class="gr">καὶ τοῖς μὴ ἐπαΐουσιν,</span><span class="tr">e per chi non se ne intende</span></span>
+        <span class="u"><span class="gr">ἐκ τῶν χρωμάτων δὲ</span><span class="tr">bensì dai colori</span></span>
+        <span class="u"><span class="gr">καὶ σχημάτων</span><span class="tr">e dalle forme</span></span>
+        <span class="u"><span class="gr">θεωροῦσιν;</span><span class="tr">(per chi) giudica guardando</span></span>
+      </div>
+      <p class="resa">«Dunque, non dobbiamo stabilire che tutti i poeti, a cominciare da Omero, sono imitatori di simulacri della virtù e delle altre cose su cui compongono, e non toccano la verità, ma — come dicevamo or ora — al modo del pittore, che farà un calzolaio dall&rsquo;apparenza vera pur non intendendosi di calzoleria, per gente che non se ne intende e giudica in base ai colori e alle forme?»</p>
+    </div>
+
+    <div class="sent battuta">
+      <p class="snum">Battuta &middot; Glaucone</p>
+      <div class="inter">
+        <span class="u"><span class="gr">Πάνυ μὲν οὖν.</span><span class="tr">certamente</span></span>
+      </div>
+    </div>
+
+    <div class="sent">
+      <p class="snum">Periodo 2 &middot; Socrate</p>
+      <div class="inter">
+        <span class="u"><span class="gr">Οὕτω δὴ</span><span class="tr">così dunque</span></span>
+        <span class="u"><span class="gr">οἶμαι</span><span class="tr">credo</span></span>
+        <span class="u"><span class="gr">καὶ τὸν ποιητικὸν</span><span class="tr">anche il poeta <span class="note">(sogg. dell&rsquo;infinitiva)</span></span></span>
+        <span class="u"><span class="gr">φήσομεν</span><span class="tr">diremo</span></span>
+        <span class="u"><span class="gr">χρώματα ἄττα</span><span class="tr">certi colori <span class="note">(ἄττα = τινά)</span></span></span>
+        <span class="u"><span class="gr">ἑκάστων τῶν τεχνῶν</span><span class="tr">di ciascuna delle arti</span></span>
+        <span class="u"><span class="gr">τοῖς ὀνόμασι καὶ ῥήμασιν</span><span class="tr">con i nomi e con i verbi</span></span>
+        <span class="u"><span class="gr">ἐπιχρωματίζειν</span><span class="tr">stendere come tinta</span></span>
+        <span class="u"><span class="gr">αὐτὸν οὐκ ἐπαΐοντα</span><span class="tr">pur senza intendersene</span></span>
+        <span class="u"><span class="gr">ἀλλ᾽ ἢ μιμεῖσθαι,</span><span class="tr">se non (quanto basta) per imitare</span></span>
+        <span class="u"><span class="gr">ὥστε</span><span class="tr">cosicché <span class="note">(consecutiva)</span></span></span>
+        <span class="u"><span class="gr">ἑτέροις τοιούτοις</span><span class="tr">ad altri come lui</span></span>
+        <span class="u"><span class="gr">ἐκ τῶν λόγων θεωροῦσι</span><span class="tr">che giudicano dalle parole</span></span>
+        <span class="u"><span class="gr">δοκεῖν,</span><span class="tr">sembra</span></span>
+        <span class="u"><span class="gr">ἐάντε … τις λέγῃ</span><span class="tr">sia che uno parli</span></span>
+        <span class="u"><span class="gr">περὶ σκυτοτομίας</span><span class="tr">di calzoleria</span></span>
+        <span class="u"><span class="gr">ἐν μέτρῳ καὶ ῥυθμῷ καὶ ἁρμονίᾳ,</span><span class="tr">in metro, ritmo e armonia</span></span>
+        <span class="u"><span class="gr">πάνυ εὖ δοκεῖν λέγεσθαι,</span><span class="tr">che si parli molto bene</span></span>
+        <span class="u"><span class="gr">ἐάντε περὶ στρατηγίας</span><span class="tr">sia di arte militare</span></span>
+        <span class="u"><span class="gr">ἐάντε περὶ ἄλλου ὁτουοῦν·</span><span class="tr">sia di qualunque altra cosa</span></span>
+        <span class="u"><span class="gr">οὕτω</span><span class="tr">a tal punto</span></span>
+        <span class="u"><span class="gr">φύσει</span><span class="tr">per natura</span></span>
+        <span class="u"><span class="gr">αὐτὰ ταῦτα</span><span class="tr">proprio queste cose</span></span>
+        <span class="u"><span class="gr">μεγάλην τινὰ κήλησιν</span><span class="tr">un grande incantamento</span></span>
+        <span class="u"><span class="gr">ἔχειν.</span><span class="tr">possiedono</span></span>
+      </div>
+      <p class="resa">«Così dunque, credo, diremo che anche il poeta stende con nomi e verbi certi colori di ciascuna delle arti, senza intendersene se non quanto basta per imitare, sicché ad altri come lui, che giudicano dalle parole, sembra che si parli molto bene — sia che uno parli di calzoleria in metro, ritmo e armonia, sia di arte militare, sia di qualunque altra cosa: tanto grande è l&rsquo;incantamento che queste cose posseggono per natura.»</p>
+    </div>
+
+    <div class="sent">
+      <p class="snum">Periodo 3 &middot; Socrate</p>
+      <div class="inter">
+        <span class="u"><span class="gr">Ἐπεὶ</span><span class="tr">del resto</span></span>
+        <span class="u"><span class="gr">γυμνωθέντα γε</span><span class="tr">una volta spogliate <span class="note">(part. aor. pass. n. pl.)</span></span></span>
+        <span class="u"><span class="gr">τῶν τῆς μουσικῆς χρωμάτων</span><span class="tr">dei colori della musica</span></span>
+        <span class="u"><span class="gr">τὰ τῶν ποιητῶν,</span><span class="tr">le (opere) dei poeti</span></span>
+        <span class="u"><span class="gr">αὐτὰ ἐφ᾽ αὑτῶν</span><span class="tr">da sole, per se stesse</span></span>
+        <span class="u"><span class="gr">λεγόμενα,</span><span class="tr">recitate</span></span>
+        <span class="u"><span class="gr">οἶμαί σε εἰδέναι</span><span class="tr">credo che tu sappia</span></span>
+        <span class="u"><span class="gr">οἷα φαίνεται.</span><span class="tr">che figura fanno <span class="note">(interr. indiretta)</span></span></span>
+        <span class="u"><span class="gr">Τεθέασαι γάρ που.</span><span class="tr">le hai infatti osservate, suppongo</span></span>
+      </div>
+      <p class="resa">«Del resto, quando le opere dei poeti siano spogliate dei colori della musica e vengano recitate da sole, per se stesse, credo che tu sappia che figura fanno. Le avrai certo osservate.»</p>
+    </div>
+
+    <div class="sent battuta">
+      <p class="snum">Battuta &middot; Glaucone</p>
+      <div class="inter">
+        <span class="u"><span class="gr">Ἔγωγ᾽, ἔφη.</span><span class="tr">«io sì», disse</span></span>
+      </div>
+    </div>
+
+    <div class="sent">
+      <p class="snum">Periodo 4 &middot; Socrate</p>
+      <div class="inter">
+        <span class="u"><span class="gr">Οὐκοῦν,</span><span class="tr">dunque, (non è vero che)…?</span></span>
+        <span class="u"><span class="gr">ἦν δ᾽ ἐγώ,</span><span class="tr">dissi io</span></span>
+        <span class="u"><span class="gr">ἔοικεν</span><span class="tr">assomigliano <span class="note">(sing. con sogg. n. pl.)</span></span></span>
+        <span class="u"><span class="gr">τοῖς τῶν ὡραίων προσώποις,</span><span class="tr">ai volti di chi è nel fiore degli anni</span></span>
+        <span class="u"><span class="gr">καλῶν δὲ μή,</span><span class="tr">ma non bello</span></span>
+        <span class="u"><span class="gr">οἷα γίγνεται ἰδεῖν</span><span class="tr">quali si presentano alla vista</span></span>
+        <span class="u"><span class="gr">ὅταν</span><span class="tr">quando <span class="note">(temporale eventuale)</span></span></span>
+        <span class="u"><span class="gr">αὐτὰ</span><span class="tr">li</span></span>
+        <span class="u"><span class="gr">τὸ ἄνθος προλίπῃ;</span><span class="tr">il fiore (della giovinezza) abbandoni</span></span>
+      </div>
+      <p class="resa">«E allora — dissi io — non assomigliano forse ai volti di chi è nel fiore degli anni ma non è bello, quali si presentano alla vista quando il fiore della giovinezza li abbandona?»</p>
+    </div>
+
+    <div class="sent battuta">
+      <p class="snum">Battuta &middot; Glaucone</p>
+      <div class="inter">
+        <span class="u"><span class="gr">Παντάπασιν, ἦ δ᾽ ὅς.</span><span class="tr">«assolutamente», disse</span></span>
+      </div>
+    </div>
+
+    <div class="sent">
+      <p class="snum">Periodo 5 &middot; Socrate</p>
+      <div class="inter">
+        <span class="u"><span class="gr">Ἴθι δή,</span><span class="tr">orsù dunque</span></span>
+        <span class="u"><span class="gr">τόδε ἄθρει·</span><span class="tr">considera questo</span></span>
+        <span class="u"><span class="gr">ὁ τοῦ εἰδώλου ποιητής,</span><span class="tr">il creatore del simulacro</span></span>
+        <span class="u"><span class="gr">ὁ μιμητής,</span><span class="tr">l&rsquo;imitatore</span></span>
+        <span class="u"><span class="gr">φαμέν,</span><span class="tr">diciamo</span></span>
+        <span class="u"><span class="gr">τοῦ μὲν ὄντος</span><span class="tr">di ciò che è <span class="note">(gen. con ἐπαΐω)</span></span></span>
+        <span class="u"><span class="gr">οὐδὲν ἐπαΐει,</span><span class="tr">non capisce nulla</span></span>
+        <span class="u"><span class="gr">τοῦ δὲ φαινομένου.</span><span class="tr">ma (solo) di ciò che appare</span></span>
+      </div>
+      <p class="resa">«Orsù dunque, considera questo: il creatore del simulacro, l&rsquo;imitatore — diciamo — non capisce nulla di ciò che è, ma solo di ciò che appare.»</p>
+    </div>
+  </section>
+
+  <footer class="colophon">
+    Traduzione interlineare a uso didattico. Le rese letterali seguono l&rsquo;ordine delle parole del testo greco; le indicazioni tra parentesi segnalano i costrutti notevoli richiamati dal manuale.
+  </footer>
+</div>
+
+</body>
+</html>
