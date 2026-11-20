@@ -312,6 +312,10 @@ input[type=range]{flex:1;accent-color:var(--accent);min-width:80px}
         <div class="colori" id="colTratto"></div>
         <div class="riga"><label for="spTratto">Spessore</label><input type="range" id="spTratto" min="0" max="16" step="0.5"><span class="num" id="spTrattoV"></span></div>
         <div class="seg" id="stiliLinea"></div>
+        <div class="seg" id="aspetto">
+          <button data-v="preciso" title="Linee nette">Preciso</button>
+          <button data-v="schizzo" title="Come disegnato a matita"><svg width="40" height="14" viewBox="0 0 40 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 8C10 5 18 10 26 6s8 1 12-1"/><path d="M3 10C11 7 19 11 27 8s7 0 10-2" opacity=".6"/></svg>&nbsp;Schizzo</button>
+        </div>
       </section>
       <section data-sez="riemp">
         <h3>Riempimento</h3>
@@ -984,7 +988,7 @@ const PREF_DEFAULT = {
   freccia:{tipo:'dritta', inizio:'nessuna', fine:'triangolo', punta:13},
   font:'EB Garamond', dimFont:26, coloreTesto:'#111827', interlinea:1.16,
   penna:{colore:'#1f2937', spessore:3.5, pressione:true}, evid:{colore:'#fde047', spessore:22},
-  gommaSoloTratti:false, soloPenna:false, tieni:false, fontAggiunti:[], riconosci:true,
+  gommaSoloTratti:false, soloPenna:false, tieni:false, fontAggiunti:[], riconosci:true, schizzo:false,
 };
 const stato = Object.assign(structuredClone(PREF_DEFAULT), leggiLocale('tabula:pref') || {}, {strumento:'seleziona'});
 const foglio = {sfondo:'bianco', griglia:'puntini'};
@@ -1055,7 +1059,7 @@ fabric.Object.prototype.set({
   cornerStyle: 'circle', cornerSize: 11, touchCornerSize: 30, padding: 3, borderScaleFactor: 1.3,
 });
 fabric.Object.prototype.controls.mtr.offsetY = -28;
-const PROPS = ['id','forma','tipoOgg','legatoA','perPixelTargetFind','strokeUniform','stileLinea','bloccato',
+const PROPS = ['id','forma','tipoOgg','legatoA','schizzo','perPixelTargetFind','strokeUniform','stileLinea','bloccato',
   'lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','hasControls','globalCompositeOperation'];
 
 function ridimensiona() {
@@ -1154,7 +1158,7 @@ fabric.Freccia = fabric.util.createClass(fabric.Object, {
   initialize(o = {}) {
     this.callSuper('initialize', o);
     const def = {rx1:0, ry1:0, rx2:100, ry2:0, cu:0, tipo:'dritta', inizio:'nessuna', fine:'triangolo', punta:13,
-                 da:null, a:null, etichetta:'', fontEtichetta:'', stileLinea:'continua'};
+                 da:null, a:null, etichetta:'', fontEtichetta:'', stileLinea:'continua', schizzo:false};
     for (const k in def) this[k] = o[k] !== undefined ? structuredClone(o[k]) : def[k];
     this.set({objectCaching:false, perPixelTargetFind:true, hasBorders:false, lockScalingX:true, lockScalingY:true,
               lockRotation:true, fill:null, strokeLineCap:'round', strokeLineJoin:'round'});
@@ -1164,7 +1168,7 @@ fabric.Freccia = fabric.util.createClass(fabric.Object, {
   toObject(extra) {
     return fabric.util.object.extend(this.callSuper('toObject', extra), {
       rx1:this.rx1, ry1:this.ry1, rx2:this.rx2, ry2:this.ry2, cu:this.cu, tipo:this.tipo, inizio:this.inizio, fine:this.fine,
-      punta:this.punta, da:this.da, a:this.a, etichetta:this.etichetta, fontEtichetta:this.fontEtichetta, stileLinea:this.stileLinea,
+      punta:this.punta, da:this.da, a:this.a, etichetta:this.etichetta, fontEtichetta:this.fontEtichetta, stileLinea:this.stileLinea, schizzo:this.schizzo,
     });
   },
   dimPunta() { return this.punta + this.strokeWidth * 1.4; },
@@ -1222,11 +1226,20 @@ fabric.Freccia = fabric.util.createClass(fabric.Object, {
     ctx.strokeStyle = col; ctx.lineWidth = sw; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     const dash = trattiDash(this.stileLinea, sw);
     ctx.setLineDash(dash || []);
-    ctx.beginPath(); ctx.moveTo(q1.x, q1.y);
-    if (this.tipo === 'curva') ctx.quadraticCurveTo(pts.c.x, pts.c.y, q2.x, q2.y);
-    else if (this.tipo === 'gomito') { ctx.lineTo(pts.a.x, pts.a.y); ctx.lineTo(pts.b.x, pts.b.y); ctx.lineTo(q2.x, q2.y); }
-    else ctx.lineTo(q2.x, q2.y);
-    if (sw > 0) ctx.stroke();
+    if (this.schizzo && sw > 0) {
+      // stile schizzo: la linea è ripassata due volte, con un leggero tremolio sempre uguale
+      let linea;
+      if (this.tipo === 'curva') { linea = []; for (let k = 0; k <= 16; k++) { const t = k / 16, u = 1 - t; linea.push({x: u * u * q1.x + 2 * u * t * pts.c.x + t * t * q2.x, y: u * u * q1.y + 2 * u * t * pts.c.y + t * t * q2.y}); } }
+      else if (this.tipo === 'gomito') linea = [q1, pts.a, pts.b, q2];
+      else linea = [q1, q2];
+      tracciaSchizzo(ctx, linea, false, semeDi(this.id), sw);
+    } else {
+      ctx.beginPath(); ctx.moveTo(q1.x, q1.y);
+      if (this.tipo === 'curva') ctx.quadraticCurveTo(pts.c.x, pts.c.y, q2.x, q2.y);
+      else if (this.tipo === 'gomito') { ctx.lineTo(pts.a.x, pts.a.y); ctx.lineTo(pts.b.x, pts.b.y); ctx.lineTo(q2.x, q2.y); }
+      else ctx.lineTo(q2.x, q2.y);
+      if (sw > 0) ctx.stroke();
+    }
     ctx.setLineDash([]);
     this._testa(ctx, p1, d1, this.inizio, S, col, sw);
     this._testa(ctx, p2, d2, this.fine, S, col, sw);
@@ -1270,6 +1283,109 @@ fabric.Freccia = fabric.util.createClass(fabric.Object, {
   },
 });
 fabric.Freccia.fromObject = (o, cb) => { const f = new fabric.Freccia(o); cb && cb(f); return f; };
+
+/* ---------------------------------------------------------------- stile «schizzo»: forme e frecce come disegnate a matita */
+// numeri casuali ripetibili: lo stesso oggetto trema sempre allo stesso modo
+function semeDi(id) { let h = 2166136261; for (const c of String(id || 'x')) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function casuale(seme) { let s = seme || 1; return () => { s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296 - .5; }; }
+// traccia una spezzata (aperta o chiusa) due volte, con lati leggermente incurvati e punte che sbordano
+function tracciaSchizzo(ctx, pts, chiusa, seme, sw) {
+  const amp = Math.min(4.5, 1.8 + sw * .6);
+  for (let pass = 0; pass < 2; pass++) {
+    const r = casuale(seme + pass * 7919);
+    const tremo = p => ({x: p.x + r() * amp, y: p.y + r() * amp});
+    const n = pts.length, lati = chiusa ? n : n - 1;
+    ctx.beginPath();
+    for (let i = 0; i < lati; i++) {
+      const a = pts[i], b = pts[(i + 1) % n];
+      const L = Math.hypot(b.x - a.x, b.y - a.y) || 1, ux = (b.x - a.x) / L, uy = (b.y - a.y) / L;
+      const sborda = L > 30 ? Math.min(9, L * .045) * (r() + .6) : 0;
+      const A = tremo({x: a.x - ux * sborda * (pass ? .3 : .6), y: a.y - uy * sborda * (pass ? .3 : .6)});
+      const B = tremo({x: b.x + ux * sborda, y: b.y + uy * sborda});
+      const curva = r() * Math.min(L * .05, 9) * 2;
+      const C = {x: (A.x + B.x) / 2 - uy * curva, y: (A.y + B.y) / 2 + ux * curva};
+      ctx.moveTo(A.x, A.y); ctx.quadraticCurveTo(C.x, C.y, B.x, B.y);
+    }
+    ctx.lineWidth = sw * (pass ? .75 : 1);
+    ctx.stroke();
+  }
+}
+// curva chiusa morbida (ellissi): raggio che ondeggia piano, ripassata due volte con leggero sfasamento
+function ellisseSchizzo(ctx, rx, ry, seme, sw) {
+  for (let pass = 0; pass < 2; pass++) {
+    const r = casuale(seme + pass * 104729);
+    const fase = r() * 6, k = 2 + Math.floor((r() + .5) * 2), ond = .028 + Math.abs(r()) * .03;
+    const ini = r() * 6.28, fine = ini + Math.PI * 2 + .25 + Math.abs(r()) * .3;
+    ctx.beginPath();
+    for (let a = ini; a <= fine; a += .12) {
+      const f = 1 + ond * Math.sin(k * a + fase) + (pass ? .02 : 0);
+      const x = Math.cos(a) * rx * f, y = Math.sin(a) * ry * f;
+      if (a === ini) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.lineWidth = sw * (pass ? .75 : 1);
+    ctx.stroke();
+  }
+}
+// contorno di una forma, in coordinate interne all'oggetto (già moltiplicate per la scala)
+function contornoForma(o) {
+  const sx = o.scaleX || 1, sy = o.scaleY || 1;
+  if (o.type === 'rect') {
+    const w = o.width * sx, h = o.height * sy, r = Math.min(o.rx || 0, w / 2, h / 2);
+    if (r < 2) return [{x: -w / 2, y: -h / 2}, {x: w / 2, y: -h / 2}, {x: w / 2, y: h / 2}, {x: -w / 2, y: h / 2}];
+    const out = [], ang = [[w / 2 - r, -h / 2 + r, -Math.PI / 2], [w / 2 - r, h / 2 - r, 0], [-w / 2 + r, h / 2 - r, Math.PI / 2], [-w / 2 + r, -h / 2 + r, Math.PI]];
+    for (const [cx, cy, a0] of ang) for (let k = 0; k <= 3; k++) { const a = a0 + k * Math.PI / 6; out.push({x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r}); }
+    return out;
+  }
+  if (o.type === 'path' && POLIGONI[o.forma] && o.pathOffset)
+    return POLIGONI[o.forma].map(([x, y]) => ({x: (x - o.pathOffset.x) * sx, y: (y - o.pathOffset.y) * sy}));
+  return null;
+}
+function disegnaFormaSchizzo(ctx, o, originale) {
+  const sx = o.scaleX || 1, sy = o.scaleY || 1, sw = o.strokeWidth || 0, seme = semeDi(o.id);
+  const contorno = contornoForma(o);
+  ctx.save();
+  ctx.scale(1 / sx, 1 / sy);   // si disegna in punti veri, così il tremolio non si deforma
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.strokeStyle = o.stroke;
+  ctx.setLineDash(trattiDash(o.stileLinea, sw) || []);
+  if (o.fill) {
+    // riempimento un po' fuori registro, come un colore steso a mano
+    const r = casuale(seme + 31), dx = r() * 4, dy = r() * 4;
+    ctx.save(); ctx.translate(dx, dy); ctx.scale(sx, sy);
+    const st = o.stroke, w = o.strokeWidth, ombra = o.shadow;
+    o.stroke = null; o.strokeWidth = 0;
+    originale.call(o, ctx);
+    o.stroke = st; o.strokeWidth = w;
+    ctx.restore();
+  }
+  if (sw > 0 && o.stroke) {
+    if (contorno) tracciaSchizzo(ctx, contorno, true, seme, sw);
+    else if (o.type === 'ellipse') ellisseSchizzo(ctx, o.rx * sx, o.ry * sy, seme, sw);
+    else {
+      // tracciati curvi (nuvola, cuore, scudo…): il contorno vero ripassato due volte, leggermente spostato
+      for (let pass = 0; pass < 2; pass++) {
+        const r = casuale(seme + pass * 613);
+        ctx.save(); ctx.translate(r() * 3, r() * 3); ctx.rotate(r() * .012); ctx.scale(sx * (1 + r() * .012), sy * (1 + r() * .012));
+        const f = o.fill; o.fill = null;
+        const w = o.strokeWidth; o.strokeWidth = w * (pass ? .75 : 1);
+        originale.call(o, ctx);
+        o.fill = f; o.strokeWidth = w;
+        ctx.restore();
+      }
+    }
+  }
+  ctx.restore();
+}
+for (const C of [fabric.Rect, fabric.Ellipse, fabric.Path]) {
+  const originale = C.prototype._render;
+  C.prototype._render = function (ctx) {
+    if (this.schizzo && this.tipoOgg === 'forma') disegnaFormaSchizzo(ctx, this, originale);
+    else originale.call(this, ctx);
+  };
+}
+// le forme a schizzo non usano la copia in cache: il tremolio può uscire di un pelo dai bordi
+const daCache = fabric.Object.prototype.shouldCache;
+fabric.Object.prototype.shouldCache = function () { if (this.schizzo) { this.ownCaching = false; return false; } return daCache.call(this); };
 
 function controlloFreccia(qual) {
   return new fabric.Control({
@@ -1421,7 +1537,7 @@ function ombraStd() { return new fabric.Shadow({color:'rgba(15,23,42,.22)', blur
 function creaForma(nome, x, y, w, h, base = {}) {
   const st = Object.assign({
     left:x, top:y, fill: SENZA_RIEMPIMENTO.has(nome) ? '' : stato.riemp, stroke: stato.tratto, strokeWidth: stato.spessore,
-    strokeUniform: true, strokeLineJoin: 'round', forma: nome, tipoOgg: 'forma', shadow: stato.ombra ? ombraStd() : null,
+    strokeUniform: true, strokeLineJoin: 'round', forma: nome, tipoOgg: 'forma', shadow: stato.ombra ? ombraStd() : null, schizzo: !!stato.schizzo,
   }, stileLineaObj(stato.stileLinea, stato.spessore), base);
   let o;
   if (nome === 'rett' || nome === 'arrotondato') {
@@ -1669,7 +1785,7 @@ function applicaRiconoscimento(r, t, trattoObj) {
     const collega = da && a && da !== a;
     nuovo = new fabric.Freccia({stroke: t.colore, strokeWidth: spessore, tipo: 'dritta', inizio: 'nessuna',
       fine: collega ? (stato.freccia.fine !== 'nessuna' ? stato.freccia.fine : 'triangolo') : 'nessuna', punta: stato.freccia.punta,
-      da: collega ? {id: da.id} : null, a: collega ? {id: a.id} : null, fontEtichetta: stato.font, stileLinea: 'continua'});
+      da: collega ? {id: da.id} : null, a: collega ? {id: a.id} : null, fontEtichetta: stato.font, stileLinea: 'continua', schizzo: !!stato.schizzo});
     nuovo.impostaAssoluti(r.p1, r.p2);
     canvas.add(nuovo);
     if (collega) { canvas.sendToBack(nuovo); aggiornaFreccia(nuovo); }
@@ -1794,7 +1910,7 @@ canvas.on('mouse:down', opt => {
       const f = new fabric.Freccia(Object.assign({
         stroke: stato.tratto, strokeWidth: Math.max(stato.spessore, 1), tipo: stato.freccia.tipo, inizio: stato.freccia.inizio,
         fine: stato.freccia.fine, punta: stato.freccia.punta, da: s ? {id:s.id} : null, fontEtichetta: stato.font,
-        cu: stato.freccia.tipo === 'curva' ? 40 : 0,
+        cu: stato.freccia.tipo === 'curva' ? 40 : 0, schizzo: !!stato.schizzo,
       }, {stileLinea: stato.stileLinea}));
       f.impostaAssoluti(p, {x:p.x + 1, y:p.y});
       canvas.add(f);
@@ -2225,11 +2341,11 @@ function nodoCollegato(dir) {
   const w = s.getScaledWidth(), h = s.getScaledHeight();
   const pos = dir ? posizioneRamo(s, w, h, dir) : liberoVicino(s, w, h);
   const n = creaForma(s.forma, pos.x, pos.y, w, h, {fill: s.fill, stroke: s.stroke, strokeWidth: s.strokeWidth, shadow: s.shadow ? ombraStd() : null,
-    rx: s.rx, ...stileLineaObj(s.stileLinea || 'continua', s.strokeWidth)});
+    rx: s.rx, schizzo: !!s.schizzo, ...stileLineaObj(s.stileLinea || 'continua', s.strokeWidth)});
   canvas.add(n);
   const f = new fabric.Freccia({stroke: stato.tratto, strokeWidth: Math.max(stato.spessore, 1), tipo: stato.freccia.tipo,
     inizio: stato.freccia.inizio, fine: stato.freccia.fine, punta: stato.freccia.punta, da: {id: s.id}, a: {id: n.id},
-    cu: stato.freccia.tipo === 'curva' ? 40 : 0, fontEtichetta: stato.font, stileLinea: stato.stileLinea});
+    cu: stato.freccia.tipo === 'curva' ? 40 : 0, fontEtichetta: stato.font, stileLinea: stato.stileLinea, schizzo: !!stato.schizzo});
   canvas.add(f);
   canvas.sendToBack(f);
   aggiornaFreccia(f);
@@ -2280,7 +2396,7 @@ let collegaDa = null;
 function frecciaFra(a, b) {
   const f = new fabric.Freccia({stroke: stato.tratto, strokeWidth: Math.max(stato.spessore, 1), tipo: stato.freccia.tipo,
     inizio: stato.freccia.inizio, fine: stato.freccia.fine, punta: stato.freccia.punta, da: {id: a.id}, a: {id: b.id},
-    cu: stato.freccia.tipo === 'curva' ? 40 : 0, fontEtichetta: stato.font, stileLinea: stato.stileLinea});
+    cu: stato.freccia.tipo === 'curva' ? 40 : 0, fontEtichetta: stato.font, stileLinea: stato.stileLinea, schizzo: !!stato.schizzo});
   canvas.add(f);
   canvas.sendToBack(f);
   aggiornaFreccia(f);
@@ -2538,6 +2654,8 @@ function aggiornaPannello() {
   $('#spTratto').value = sp; $('#spTrattoV').textContent = sp;
   const stl = linea ? (linea.stileLinea || 'continua') : stato.stileLinea;
   $$('#stiliLinea button').forEach(b => b.classList.toggle('attivo', b.dataset.v === stl));
+  const sk = linea ? !!linea.schizzo : !!stato.schizzo;
+  $$('#aspetto button').forEach(b => b.classList.toggle('attivo', (b.dataset.v === 'schizzo') === sk));
   segnaColore('#colRiemp', forma ? forma.fill : stato.riemp);
   $('#ombra').checked = forma ? !!forma.shadow : stato.ombra;
   const nomeF = forma ? forma.forma : stato.forma;
@@ -2651,6 +2769,10 @@ function costruisciPannello() {
     });
     aggiornaLegami(); canvas.requestRenderAll(); salvaPref();
   });
+  $$('#aspetto button').forEach(b => b.onclick = () => {
+    stato.schizzo = b.dataset.v === 'schizzo';
+    applica(o => { const s = formaDi(o) || o; if (s.tipoOgg === 'forma' || s.type === 'freccia') s.set({schizzo: stato.schizzo, dirty: true}); });
+  });
   const stili = [['continua','<svg width="34" height="10"><path d="M2 5h30" stroke="currentColor" stroke-width="2.4"/></svg>'],
                  ['tratteggio','<svg width="34" height="10"><path d="M2 5h30" stroke="currentColor" stroke-width="2.4" stroke-dasharray="7 5"/></svg>'],
                  ['puntini','<svg width="34" height="10"><path d="M3 5h30" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-dasharray="0.1 6"/></svg>'],
@@ -2749,7 +2871,7 @@ function scegliForma(nome, dalPannello) {
     for (const o of sel) {
       const c = centroAss(o), w = o.getScaledWidth(), h = o.getScaledHeight();
       const n = creaForma(nome, c.x - w / 2, c.y - h / 2, w, h, {fill: SENZA_RIEMPIMENTO.has(nome) ? '' : (o.fill || stato.riemp), stroke: o.stroke,
-        strokeWidth: o.strokeWidth, shadow: o.shadow, opacity: o.opacity, ...stileLineaObj(o.stileLinea || 'continua', o.strokeWidth)});
+        strokeWidth: o.strokeWidth, shadow: o.shadow, opacity: o.opacity, schizzo: !!o.schizzo, ...stileLineaObj(o.stileLinea || 'continua', o.strokeWidth)});
       n.id = o.id;
       // sostituzione sul posto: restano i testi interni e le frecce agganciate
       const idx = canvas._objects.indexOf(o);
