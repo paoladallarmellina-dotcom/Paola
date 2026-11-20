@@ -282,6 +282,7 @@ input[type=range]{flex:1;accent-color:var(--accent);min-width:80px}
         <div class="colori" id="colPenna"></div>
         <div class="riga"><label for="spPenna">Spessore</label><input type="range" id="spPenna" min="1" max="40" step="0.5"><span class="num" id="spPennaV"></span></div>
         <label class="spunta"><input type="checkbox" id="pressione"> Sensibile alla pressione della penna</label>
+        <label class="spunta"><input type="checkbox" id="riconosci"> Trasforma i disegni in forme perfette (cerchi, rettangoli, triangoli, linee)</label>
       </section>
       <section data-sez="evid">
         <h3>Evidenziatore</h3>
@@ -983,7 +984,7 @@ const PREF_DEFAULT = {
   freccia:{tipo:'dritta', inizio:'nessuna', fine:'triangolo', punta:13},
   font:'EB Garamond', dimFont:26, coloreTesto:'#111827', interlinea:1.16,
   penna:{colore:'#1f2937', spessore:3.5, pressione:true}, evid:{colore:'#fde047', spessore:22},
-  gommaTutto:false, soloPenna:false, tieni:false, fontAggiunti:[],
+  gommaTutto:false, soloPenna:false, tieni:false, fontAggiunti:[], riconosci:true,
 };
 const stato = Object.assign(structuredClone(PREF_DEFAULT), leggiLocale('tabula:pref') || {}, {strumento:'seleziona'});
 const foglio = {sfondo:'bianco', griglia:'puntini'};
@@ -1277,7 +1278,7 @@ function controlloFreccia(qual) {
       let p;
       if (qual === 'c') p = o.puntoMedio(); else p = qual === 1 ? {x:o.rx1, y:o.ry1} : {x:o.rx2, y:o.ry2};
       return tp({x:p.x - o.width / 2, y:p.y - o.height / 2},
-        fabric.util.multiplyTransformMatrices(o.canvas.viewportTransform, o.calcTransformMatrix()));
+        fabric.util.multiplyTransformMatrices(o.canvas ? o.canvas.viewportTransform : [1, 0, 0, 1, 0, 0], o.calcTransformMatrix()));
     },
     actionHandler(e, tr, x, y) {
       const o = tr.target;
@@ -1543,9 +1544,154 @@ function chiudiTratto() {
     fill: tratto.colore, stroke: null, strokeWidth: 0, tipoOgg: 'tratto', perPixelTargetFind: true,
     opacity: tratto.evid ? .45 : 1, globalCompositeOperation: tratto.evid ? 'multiply' : 'source-over',
   });
+  const t = tratto;
   tratto = null;
   canvas.clearContext(canvas.contextTop);
+  if (!t.evid && stato.riconosci) {
+    const r = riconosciForma(t.pts);
+    if (r) { applicaRiconoscimento(r, t, o); return; }
+  }
   canvas.add(o);
+}
+
+/* ---------------------------------------------------------------- forme disegnate a mano → forme perfette */
+function distSeg(p, a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y, L2 = dx * dx + dy * dy;
+  if (!L2) return Math.hypot(p.x - a.x, p.y - a.y);
+  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / L2));
+  return Math.hypot(p.x - a.x - t * dx, p.y - a.y - t * dy);
+}
+function rdp(pts, eps) {
+  if (pts.length < 3) return pts.slice();
+  let iMax = 0, dMax = 0;
+  const a = pts[0], b = pts[pts.length - 1];
+  for (let i = 1; i < pts.length - 1; i++) { const d = distSeg(pts[i], a, b); if (d > dMax) { dMax = d; iMax = i; } }
+  if (dMax <= eps) return [a, b];
+  return [...rdp(pts.slice(0, iMax + 1), eps).slice(0, -1), ...rdp(pts.slice(iMax), eps)];
+}
+// restituisce {tipo:'linea', p1, p2} oppure {tipo:'forma', nome, x, y, w, h, flipX, flipY}, o null se non somiglia a niente
+function riconosciForma(grezzi) {
+  const pts = grezzi.filter((p, i) => i === 0 || Math.hypot(p.x - grezzi[i - 1].x, p.y - grezzi[i - 1].y) > .5);
+  if (pts.length < 6) return null;
+  const z = canvas.getZoom();
+  const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const w = x1 - x0, h = y1 - y0, M = Math.max(w, h);
+  let L = 0; for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+  const ini = pts[0], fin = pts[pts.length - 1], d = Math.hypot(fin.x - ini.x, fin.y - ini.y);
+  // linea: quasi dritta e abbastanza lunga sullo schermo (le lettere scritte a mano restano come sono)
+  if (d / L > .93 && d * z > 90) return {tipo: 'linea', p1: ini, p2: fin};
+  // forme chiuse: abbastanza grandi, con inizio e fine vicini
+  if (M * z < 70 || Math.min(w, h) * z < 25 || d > .3 * M || L < 2.2 * M) return null;
+  const forma = (nome, extra = {}) => ({tipo: 'forma', nome, x: x0, y: y0, w, h, ...extra});
+  // ellisse: distanza «normalizzata» dal centro quasi costante
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  const e = pts.map(p => Math.hypot((p.x - cx) / (w / 2), (p.y - cy) / (h / 2)));
+  const med = e.reduce((s, v) => s + v, 0) / e.length;
+  const sd = Math.sqrt(e.reduce((s, v) => s + (v - med) ** 2, 0) / e.length);
+  const errEll = e.reduce((s, v) => s + Math.abs(v - med), 0) / e.length * (w + h) / 4;   // scarto medio dall'ellisse, in punti
+  const tonda = () => {
+    if (Math.abs(w - h) / M < .16) { const m = (w + h) / 2; return {tipo: 'forma', nome: 'cerchio', x: cx - m / 2, y: cy - m / 2, w: m, h: m}; }
+    return forma('ellisse');
+  };
+  // poligoni: semplifica il tracciato chiuso e conta gli angoli
+  let v = rdp([...pts, ini], .075 * Math.hypot(w, h)).slice(0, -1);
+  const pulisci = () => {
+    let cambiato = true;
+    while (cambiato && v.length > 3) {
+      cambiato = false;
+      for (let i = 0; i < v.length; i++) {
+        const a = v[(i - 1 + v.length) % v.length], b = v[i], c = v[(i + 1) % v.length];
+        const vicini = Math.hypot(b.x - a.x, b.y - a.y) < .12 * M;
+        const ang = Math.abs(Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(b.y - a.y, b.x - a.x));
+        const dritto = Math.min(ang, 2 * Math.PI - ang) < .45;   // meno di ~26° di svolta: non è un angolo
+        if (vicini || dritto) { v.splice(i, 1); cambiato = true; break; }
+      }
+    }
+  };
+  pulisci();
+  const n = v.length;
+  // scarto medio del tratto dal poligono trovato: se il poligono aderisce meglio dell'ellisse, è un poligono
+  const errPoly = n >= 3 ? pts.reduce((s, p) => s + Math.min(...v.map((a, i) => distSeg(p, a, v[(i + 1) % n]))), 0) / pts.length : Infinity;
+  const poligono = n >= 3 && n <= 6 && errPoly < .06 * M && errPoly < errEll * .8;
+  if (!poligono) return sd < .13 ? tonda() : null;
+  const vicino = (p, q, tol) => Math.hypot((p.x - q.x) / w, (p.y - q.y) / h) < tol;
+  const angoli = [{x: x0, y: y0}, {x: x1, y: y0}, {x: x1, y: y1}, {x: x0, y: y1}];
+  const medi = [{x: cx, y: y0}, {x: x1, y: cy}, {x: cx, y: y1}, {x: x0, y: cy}];
+  if (n === 4) {
+    if (v.every(p => angoli.some(q => vicino(p, q, .28)))) return forma('rett');
+    if (v.every(p => medi.some(q => vicino(p, q, .3)))) return forma('rombo');
+    return null;
+  }
+  if (n === 3) {
+    // triangolo rettangolo: tre vertici negli angoli del riquadro
+    const presenti = angoli.map(q => v.some(p => vicino(p, q, .25)));
+    if (presenti.filter(Boolean).length === 3) {
+      const manca = presenti.indexOf(false);   // 0 alto-sx, 1 alto-dx, 2 basso-dx, 3 basso-sx
+      return forma('triRett', {flipX: manca === 0 || manca === 3, flipY: manca === 2 || manca === 3});
+    }
+    // triangolo: punta in alto o in basso
+    const sopra = v.filter(p => p.y < cy).length;
+    return forma('triangolo', {flipY: sopra === 2});
+  }
+  if (n === 5) return forma('pentagono');
+  if (n === 6) return forma('esagono');
+  return sd < .13 ? tonda() : null;
+}
+const NOMI_FORME = {cerchio: 'cerchio', ellisse: 'ellisse', rett: 'rettangolo', rombo: 'rombo', triangolo: 'triangolo',
+  triRett: 'triangolo rettangolo', pentagono: 'pentagono', esagono: 'esagono'};
+// la scritta libera racchiusa dentro una forma disegnata diventa il testo della forma
+function legaTestoAForma(t, s) {
+  const k = t.scaleX || 1;
+  const nt = new fabric.Textbox(t.text, {
+    fontFamily: t.fontFamily, fontSize: t.fontSize * k, fill: t.fill, fontWeight: t.fontWeight, fontStyle: t.fontStyle,
+    underline: t.underline, linethrough: t.linethrough, textBackgroundColor: t.textBackgroundColor, lineHeight: t.lineHeight,
+    styles: structuredClone(t.styles || {}), textAlign: 'center', tipoOgg: 'testo', splitByGrapheme: false,
+    editingBorderColor: 'rgba(0,0,0,0)', hasControls: false, cursorColor: '#1d5bb8', selectionColor: 'rgba(29,91,184,.22)',
+  });
+  canvas.remove(t);
+  nt.legatoA = s.id;
+  canvas.add(nt);
+  adattaTesto(nt, s);
+  for (const f of canvas.getObjects()) if (f.type === 'freccia') {
+    if (f.da && f.da.id === t.id) f.da = {id: s.id};
+    if (f.a && f.a.id === t.id) f.a = {id: s.id};
+  }
+}
+function applicaRiconoscimento(r, t, trattoObj) {
+  const prima = serializza();
+  const spessore = Math.max(1.5, Math.round(t.size * .6 * 2) / 2);
+  sospendiStoria = true;
+  let messaggio, nuovo;
+  if (r.tipo === 'linea') {
+    const sA = formaSotto(r.p1), sB = formaSotto(r.p2);
+    const da = sA && formaDi(sA), a = sB && formaDi(sB);
+    const collega = da && a && da !== a;
+    nuovo = new fabric.Freccia({stroke: t.colore, strokeWidth: spessore, tipo: 'dritta', inizio: 'nessuna',
+      fine: collega ? (stato.freccia.fine !== 'nessuna' ? stato.freccia.fine : 'triangolo') : 'nessuna', punta: stato.freccia.punta,
+      da: collega ? {id: da.id} : null, a: collega ? {id: a.id} : null, fontEtichetta: stato.font, stileLinea: 'continua'});
+    nuovo.impostaAssoluti(r.p1, r.p2);
+    canvas.add(nuovo);
+    if (collega) { canvas.sendToBack(nuovo); aggiornaFreccia(nuovo); }
+    messaggio = collega ? 'Linea trasformata in freccia di collegamento.' : 'Linea raddrizzata.';
+  } else {
+    nuovo = creaForma(r.nome, r.x, r.y, r.w, r.h, {fill: '', stroke: t.colore, strokeWidth: spessore,
+      flipX: !!r.flipX, flipY: !!r.flipY, shadow: null, ...stileLineaObj('continua', spessore)});
+    canvas.add(nuovo);
+    // una scritta libera disegnata dentro la forma ne diventa il testo
+    const dentro = canvas.getObjects().filter(o => eTesto(o) && !o.legatoA && o !== nuovo).find(o => {
+      const c = centroAss(o); return c.x > r.x && c.x < r.x + r.w && c.y > r.y && c.y < r.y + r.h;
+    });
+    if (dentro) legaTestoAForma(dentro, nuovo);
+    messaggio = 'Riconosciuto: ' + NOMI_FORME[r.nome] + (dentro ? ', con la scritta dentro.' : '.');
+  }
+  sospendiStoria = false;
+  aggiornaLegami();
+  canvas.requestRenderAll();
+  salvaStoria();
+  avviso(messaggio, {testo: 'Tieni il tratto a mano', fn: () => {
+    carica(prima, () => { canvas.add(trattoObj); salvaStoria(); });
+  }}, 6000);
 }
 
 /* ---------------------------------------------------------------- gomma */
@@ -2427,6 +2573,7 @@ function aggiornaPannello() {
   segnaColore('#colPenna', stato.penna.colore);
   $('#spPenna').value = stato.penna.spessore; $('#spPennaV').textContent = stato.penna.spessore;
   $('#pressione').checked = stato.penna.pressione;
+  $('#riconosci').checked = stato.riconosci;
   segnaColore('#colEvid', stato.evid.colore);
   $('#spEvid').value = stato.evid.spessore; $('#spEvidV').textContent = stato.evid.spessore;
   $('#gommaTutto').checked = stato.gommaTutto;
@@ -2487,6 +2634,7 @@ function costruisciPannello() {
   range('#spPenna', v => { stato.penna.spessore = v; $('#spPennaV').textContent = v; salvaPref(); });
   range('#spEvid', v => { stato.evid.spessore = v; $('#spEvidV').textContent = v; salvaPref(); });
   $('#pressione').onchange = e => { stato.penna.pressione = e.target.checked; salvaPref(); };
+  $('#riconosci').onchange = e => { stato.riconosci = e.target.checked; salvaPref(); };
   $('#gommaTutto').onchange = e => { stato.gommaTutto = e.target.checked; salvaPref(); };
   range('#spTratto', v => {
     stato.spessore = v; $('#spTrattoV').textContent = v;
