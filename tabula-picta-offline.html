@@ -74,6 +74,7 @@ svg{display:block}
 #menuDisegni{width:min(400px,calc(100vw - 24px));max-height:min(560px,calc(100% - 100px));overflow:auto}
 .griglia-disegni{display:grid;grid-template-columns:repeat(auto-fill,minmax(48px,1fr));gap:4px;margin-bottom:10px}
 .griglia-disegni .fb{width:100%;height:50px}
+.nomiTrovati{font-size:12px;color:var(--muted);margin:-4px 2px 8px}
 .simboli{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:10px}
 .simboli button{min-width:34px;height:34px;border-radius:7px;background:var(--surface2);font:18px/1 "Noto Serif","Times New Roman",serif}
 .simboli button:hover{background:var(--accentSoft)}
@@ -1847,7 +1848,14 @@ let pennaVista = false;
 
 function scegliStrumento(s) {
   if (s === 'altro') { apriMenu('menuAltro', `[data-str="altro"]`); return; }
-  if (s === 'disegni') { apriMenu('menuDisegni', window.innerWidth <= 760 ? '[data-str="altro"]' : '[data-str="disegni"]'); return; }
+  if (s === 'disegni') {
+    apriMenu('menuDisegni', window.innerWidth <= 760 ? '[data-str="altro"]' : '[data-str="disegni"]');
+    if (!$('#menuDisegni').hidden) {
+      $('#cercaDisegno').value = ''; mostraDisegni('');
+      if (!matchMedia('(pointer: coarse)').matches) setTimeout(() => $('#cercaDisegno').focus(), 30);
+    }
+    return;
+  }
   if (s === 'simboli') { apriMenu('menuSimboli', `[data-str="simboli"]`); return; }
   if (s === 'immagine') { $('#fileImg').click(); return; }
   if (s === 'forma' && stato.strumento === 'forma') { apriMenu('menuForme', `[data-str="forma"]`); return; }
@@ -3478,12 +3486,103 @@ function spessoreDisegno(g, v) {
   g.getObjects().forEach(o => o.set({strokeWidth: o.secondo ? v * .55 : v}));
   g.set({dirty: true});
 }
+// parole con cui si trova ogni disegnino (oltre al suo nome): sinonimi, concetti vicini, qualche parola greca e latina
+const PAROLE_DISEGNI = {
+  omino: 'persona uomo donna individuo figura io lui lei umano personaggio cittadino', saluta: 'ciao saluto benvenuto accoglienza arrivo partenza addio',
+  corre: 'correre corsa fuga fuggire velocità fretta sport movimento gara atleta olimpiadi', pensa: 'pensare pensiero riflessione riflettere idea filosofo filosofia meditare dubbio sogno',
+  braccia: 'gioia vittoria festa entusiasmo successo esultare felicità', coppia: 'due coppia amici amicizia relazione dialogo incontro fratelli sposi',
+  gruppo: 'gruppo popolo comunità società famiglia classe folla assemblea polis demos insieme', maestro: 'insegnante docente professore professoressa lezione spiegare scuola maestro insegnare',
+  bambino: 'bambino figlio figlia ragazzo ragazza infanzia alunno studente giovane',
+  felice: 'felice contento gioia felicità sorriso allegria bene positivo', triste: 'triste tristezza dolore pianto infelice malinconia lutto negativo',
+  sorpreso: 'sorpresa stupore meraviglia thauma meravigliarsi shock', arrabbiato: 'rabbia ira collera arrabbiato odio furia menis',
+  dubbioso: 'dubbio incertezza perplesso perplessità esitazione confuso', ride: 'ridere risata riso comico commedia divertimento allegria',
+  occhio: 'occhio vedere vista sguardo osservare guardare visione', occhi: 'occhi vedere sguardo guardare spiare attenzione',
+  profilo: 'testa profilo persona mente pensiero ritratto volto', mano: 'mano alzare domanda intervenire fermo stop alt partecipare',
+  libro: 'libro leggere lettura testo opera letteratura biblioteca sapere conoscenza', idea: 'idea intuizione invenzione lampadina genio scoperta capire creatività',
+  matita: 'matita scrivere disegnare penna appunti esercizio compito', casa: 'casa famiglia oikos domus abitare dimora patria focolare',
+  albero: 'albero natura bosco foresta pianta radici genealogia', sole: 'sole luce giorno estate caldo apollo helios verità',
+  luna: 'luna notte sera sogno sonno selene artemide stelle', stella: 'stella eccellente importante astro cielo merito', cuore: 'cuore amore affetto passione eros amicizia philia sentimento',
+  chiave: 'chiave soluzione segreto aprire accesso parola chiave concetto chiave', orologio: 'orologio ora tempo puntualità chronos durata',
+  lente: 'lente cercare ricerca indagine analisi esaminare approfondire dettaglio', bandiera: 'bandiera nazione patria obiettivo traguardo conquista',
+  fumetto: 'fumetto nuvoletta dire parola discorso dialogo citazione', domanda: 'domanda punto interrogativo chiedere problema perché quesito mistero',
+  esclamativo: 'importante attenzione esclamazione ricorda nota bene', bersaglio: 'obiettivo scopo fine meta telos traguardo bersaglio',
+  lettera: 'lettera posta messaggio epistola mail comunicazione', mappa: 'mappa carta geografia viaggio luogo territorio orientarsi',
+  cervello: 'mente cervello intelligenza ragione logos nous memoria pensiero',
+  tempo: 'tempo clessidra durata passare scadenza chronos kairos attesa', ciclo: 'ciclo ripetizione ritorno circolare eterno ritorno stagioni rinnovamento',
+  cambiamento: 'cambiamento trasformazione metamorfosi mutamento evoluzione passaggio', causa: 'causa effetto conseguenza reazione a catena domino aitia',
+  legame: 'legame relazione unione collegamento connessione alleanza vincolo', liberta: 'libertà liberazione eleutheria libertas schiavitù riscatto',
+  potere: 'potere re regina regno sovrano tiranno corona autorità dominio basileus rex', conflitto: 'conflitto guerra battaglia lotta scontro polemos bellum violenza',
+  pace: 'pace ulivo concordia armonia riconciliazione eirene pax atena', anima: 'anima psiche spirito farfalla psyche interiorità',
+  vita: 'vita nascita crescita germoglio natura inizio speranza bios zoe', morte: 'morte teschio fine mortale thanatos ade defunto',
+  infinito: 'infinito eterno eternità illimitato apeiron sempre', contrasto: 'contrasto opposizione contrario antitesi divisione separazione',
+  confronto: 'confronto scambio paragone reciproco dare avere commercio', gerarchia: 'gerarchia piramide livelli società classi ordine struttura',
+  scelta: 'scelta bivio decisione decidere alternativa strada ercole', ostacolo: 'ostacolo muro limite barriera difficoltà blocco confine',
+  pericolo: 'pericolo attenzione rischio avvertenza errore minaccia', divieto: 'divieto vietato proibito no stop negazione legge',
+  giusto: 'giusto sì corretto vero esatto approvato fatto', sbagliato: 'sbagliato no errore falso errato annullato',
+  fortuna: 'fortuna destino sorte caso tyche ruota fato moira', labirinto: 'labirinto minotauro cnosso teseo confusione percorso intricato',
+  crescita: 'crescita aumento sviluppo progresso statistica economia miglioramento', processo: 'processo meccanismo funzionamento sistema procedura ingranaggio tecnica',
+  leggere: 'leggere lettura lettore libro testo', scrivere: 'scrivere scrittura testo tema appunti compito produzione',
+  ascoltare: 'ascoltare ascolto orecchio sentire udito audio', parlare: 'parlare parola oralità esposizione interrogazione retorica discorso voce',
+  discutere: 'discutere discussione dialogo dibattito confronto conversazione', studiare: 'studiare studio libri ripassare compiti sapere',
+  computer: 'computer digitale tecnologia internet portatile informatica', calcolare: 'calcolare calcolo matematica numeri conto',
+  verifica: 'verifica test compito esame prova questionario controllo', calendario: 'calendario data giorno programma pianificare settimana',
+  scadenza: 'scadenza sveglia orario puntuale termine consegna', presentare: 'presentare presentazione relazione esporre lavagna grafico',
+  gruppo_lavoro: 'gruppo lavoro cooperare collaborare squadra team riunione', tradurre: 'tradurre traduzione versione greco latino lingua',
+  musica: 'musica canto nota suono melodia poesia lirica', arte: 'arte disegno pittura colore creatività tavolozza',
+  premio: 'premio coppa vittoria vincitore gara merito', gioco: 'gioco dado caso sorte gioco didattico divertimento',
+  uscita: 'uscita didattica gita viaggio valigia partenza', video: 'video filmato film guardare multimedia', mappa_concettuale: 'mappa concettuale schema collegamenti nodi rete',
+  ripasso: 'ripasso ripassare ripetere rivedere memoria', colonna: 'colonna architettura greco tempio ordine dorico ionico sostegno',
+  tempio: 'tempio santuario religione dei culto architettura partenone', anfora: 'anfora vaso ceramica vino olio commercio',
+  rotolo: 'rotolo papiro libro testo antico scrittura manoscritto', elmo: 'elmo guerriero oplita soldato guerra armatura',
+  alloro: 'alloro corona vittoria gloria poeta apollo onore', lira: 'lira musica poesia lirica apollo orfeo canto',
+  civetta: 'civetta atena saggezza sapienza minerva atene', lucerna: 'lucerna lampada luce notte ricerca diogene',
+  nave: 'nave viaggio mare navigazione odisseo ulisse commercio flotta', spada: 'spada arma guerra combattimento eroe',
+  scudo: 'scudo difesa protezione oplita sparta guerra', maschera: 'maschera teatro tragedia commedia attore finzione',
+  moneta: 'moneta denaro soldi ricchezza economia commercio dracma', bilancia: 'bilancia giustizia legge dike iustitia equilibrio diritto',
+};
+function normalizza(t) { return (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]/g, ' '); }
+// cerca fra nome, sinonimi e categoria; prima i nomi che cominciano con la parola cercata
+function cercaDisegni(q) {
+  const parole = normalizza(q).split(/\s+/).filter(Boolean);
+  if (!parole.length) return null;
+  const out = [];
+  for (const [cat, lista] of Object.entries(DISEGNI)) for (const d of lista) {
+    const nome = normalizza(d[1]), testo = (nome + ' ' + normalizza(PAROLE_DISEGNI[d[0]]) + ' ' + normalizza(cat)).split(/\s+/);
+    let punti = 0;
+    for (const p of parole) {
+      if (nome.split(/\s+/).some(w => w === p)) punti += 5;
+      else if (nome.split(/\s+/).some(w => w.startsWith(p))) punti += 4;
+      else if (testo.some(w => w === p)) punti += 3;
+      else if (p.length >= 3 && testo.some(w => w.startsWith(p) || (w.length >= 5 && p.startsWith(w.slice(0, -1))))) punti += 1;
+    }
+    if (punti) out.push([punti, d]);
+  }
+  return out.sort((a, b) => b[0] - a[0]).map(x => x[1]);
+}
+const bottoneDisegno = ([k, t, inner]) =>
+  `<button class="fb" data-disegno="${k}" title="${t}"><svg width="34" height="34" viewBox="-4 -4 108 108" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">${inner.replace(/#000/g, 'currentColor')}</svg></button>`;
+function mostraDisegni(q = '') {
+  const trovati = cercaDisegni(q);
+  let html;
+  if (!trovati) html = Object.entries(DISEGNI).map(([cat, lista]) => `<h4>${cat}</h4><div class="griglia-disegni">${lista.map(bottoneDisegno).join('')}</div>`).join('');
+  else if (!trovati.length) html = `<p class="nota" style="padding:8px 4px">Nessun disegnino per «${q.replace(/[<>&]/g, '')}». Prova con un sinonimo o una parola più semplice.</p>`;
+  else html = `<h4>${trovati.length === 1 ? '1 disegnino' : trovati.length + ' disegnini'} · Invio inserisce il primo</h4><div class="griglia-disegni">${trovati.map(bottoneDisegno).join('')}</div>`
+    + `<div class="nomiTrovati">${trovati.slice(0, 6).map(d => d[1]).join(' · ')}${trovati.length > 6 ? ' …' : ''}</div>`;
+  $('#listaDisegni').innerHTML = html;
+  $$('#listaDisegni [data-disegno]').forEach(b => b.onclick = () => { chiudiMenu(); inserisciDisegno(b.dataset.disegno); });
+}
 function costruisciDisegni() {
-  $('#menuDisegni').innerHTML = '<h4 style="margin-top:0">Disegnini</h4>' + Object.entries(DISEGNI).map(([cat, lista]) =>
-    `<h4>${cat}</h4><div class="griglia-disegni">${lista.map(([k, t, inner]) =>
-      `<button class="fb" data-disegno="${k}" title="${t}"><svg width="34" height="34" viewBox="-4 -4 108 108" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">${inner.replace(/#000/g, 'currentColor')}</svg></button>`).join('')}</div>`).join('')
+  $('#menuDisegni').innerHTML = '<h4 style="margin-top:0">Disegnini</h4>'
+    + '<input class="campo" id="cercaDisegno" type="search" placeholder="Cerca un concetto: amore, guerra, tempo, studio…" autocomplete="off" style="margin-bottom:8px">'
+    + '<div id="listaDisegni"></div>'
     + '<p class="nota">Il disegnino compare al centro del foglio: lo ingrandisci con le maniglie, lo colori con Modifica → Linea, lo colleghi con le frecce.</p>';
-  $$('#menuDisegni [data-disegno]').forEach(b => b.onclick = () => { chiudiMenu(); inserisciDisegno(b.dataset.disegno); });
+  const campo = $('#cercaDisegno');
+  campo.addEventListener('input', () => mostraDisegni(campo.value));
+  campo.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { const t = cercaDisegni(campo.value); if (t && t.length) { chiudiMenu(); inserisciDisegno(t[0][0]); } }
+    if (e.key === 'Escape') chiudiMenu();
+  });
+  mostraDisegni('');
 }
 
 /* ---------------------------------------------------------------- avvio */
