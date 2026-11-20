@@ -171,7 +171,26 @@ input[type=range]{flex:1;accent-color:var(--accent);min-width:80px}
   .st-sep{width:1px;height:auto;margin:6px 3px}
   #pannello{top:auto;left:max(12px,env(safe-area-inset-left,0px));width:auto;max-height:42%;bottom:calc(76px + env(safe-area-inset-bottom,0px))}
   .griglia-forme{grid-template-columns:repeat(5,44px)}
+  /* telefono: barra corta (gli strumenti secondari stanno in «Altro»), più distante dal bordo */
+  #strumenti{bottom:calc(16px + env(safe-area-inset-bottom,0px));padding:4px;gap:0}
+  .st{width:42px;height:42px}
+  .st .tasto,.st.sec,.st-sep{display:none!important}
+  .st.solotel{display:grid!important}
+  /* pannello aperto: occupa la parte bassa, la barra degli strumenti si nasconde */
+  body.pannello-aperto #strumenti{display:none}
+  #pannello{bottom:calc(10px + env(safe-area-inset-bottom,0px));max-height:58%;padding-top:0}
+  #testaPannello{display:flex!important}
+  #ramiTela button.diag{display:none}
+  #barraSel{top:8px}
+  #barraSel button{height:38px;padding:0 12px}
 }
+.st.solotel{display:none}
+#testaPannello{display:none;position:sticky;top:0;z-index:2;justify-content:flex-end;padding:8px 0 4px;background:var(--surface);border-bottom:1px solid var(--line)}
+#testaPannello button{height:36px;padding:0 16px;border-radius:999px;background:var(--accent);color:#fff;font-weight:600}
+:root[data-theme="dark"] #testaPannello button{color:#0d1626}
+#menuAltro{display:flex;flex-direction:column;gap:2px;min-width:220px}
+#menuAltro button{display:flex;align-items:center;gap:12px;height:46px;padding:0 12px;border-radius:10px;text-align:left}
+#menuAltro button:hover,#menuAltro button.attivo{background:var(--accentSoft);color:var(--accent)}
 @media (prefers-reduced-motion:no-preference){#avviso{transition:opacity .2s}}
 </style>
 
@@ -229,6 +248,8 @@ input[type=range]{flex:1;accent-color:var(--accent);min-width:80px}
       <div class="griglia-forme" id="grigliaForme"></div>
     </div>
 
+    <div class="menu" id="menuAltro" hidden></div>
+
     <div class="menu" id="menuSimboli" hidden>
       <div id="simboliCont"></div>
       <p class="nota">Se stai scrivendo, il simbolo entra nel testo; altrimenti diventa un testo nuovo al centro.</p>
@@ -245,6 +266,7 @@ input[type=range]{flex:1;accent-color:var(--accent);min-width:80px}
     </div>
 
     <aside id="pannello" aria-label="Proprietà">
+      <div id="testaPannello"><button id="chiudiPannello">Fine</button></div>
       <section data-sez="penna">
         <h3>Penna</h3>
         <div class="colori" id="colPenna"></div>
@@ -930,12 +952,15 @@ const ICONE = {
   testo: '<path d="M5 6V4h14v2"/><path d="M12 4v16"/><path d="M9 20h6"/>',
   simboli: '<text x="12" y="17" text-anchor="middle" font-size="15" font-family="Georgia,serif" fill="currentColor" stroke="none">Ω</text>',
   immagine: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>',
+  altro: '<circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/>',
 };
+// il quarto campo: 'sec' = sul telefono va nel menu «Altro»; 'solotel' = compare solo sul telefono
 const STRUMENTI = [
-  ['seleziona','Seleziona e sposta','V'], ['mano','Sposta il foglio','H'], null,
-  ['penna','Penna','P'], ['evid','Evidenziatore','M'], ['gomma','Gomma','E'], null,
+  ['seleziona','Seleziona e sposta','V'], ['mano','Sposta il foglio','H','sec'], null,
+  ['penna','Penna','P'], ['evid','Evidenziatore','M','sec'], ['gomma','Gomma','E'], null,
   ['forma','Forme (tocca di nuovo per sceglierne un\'altra)','R'], ['freccia','Frecce e linee','A'], ['testo','Testo','T'], null,
-  ['simboli','Simboli e lettere greche',''], ['immagine','Inserisci un\'immagine',''],
+  ['simboli','Simboli e lettere greche','','sec'], ['immagine','Inserisci un\'immagine','','sec'],
+  ['altro','Altri strumenti','','solotel'],
 ];
 
 /* ---------------------------------------------------------------- stato */
@@ -1532,6 +1557,7 @@ let ultimoTocco = {t:0, x:0, y:0, obj:null};
 let pennaVista = false;
 
 function scegliStrumento(s) {
+  if (s === 'altro') { apriMenu('menuAltro', `[data-str="altro"]`); return; }
   if (s === 'simboli') { apriMenu('menuSimboli', `[data-str="simboli"]`); return; }
   if (s === 'immagine') { $('#fileImg').click(); return; }
   if (s === 'forma' && stato.strumento === 'forma') { apriMenu('menuForme', `[data-str="forma"]`); return; }
@@ -1543,6 +1569,10 @@ function scegliStrumento(s) {
   canvas.hoverCursor = s === 'seleziona' ? 'move' : canvas.defaultCursor;
   if (s !== 'seleziona' && s !== 'testo') canvas.discardActiveObject();
   $$('.st').forEach(b => b.classList.toggle('attivo', b.dataset.str === s));
+  // sul telefono, se lo strumento scelto sta nel menu «Altro», si illumina «Altro»
+  const ba = $('[data-str="altro"]');
+  if (ba) ba.classList.toggle('attivo', STRUMENTI.some(x => x && x[0] === s && x[3] === 'sec'));
+  $$('#menuAltro button').forEach(b => b.classList.toggle('attivo', b.dataset.altro === s));
   const bf = $('[data-str="forma"]');
   if (bf) bf.innerHTML = iconaForma(stato.forma, 24) + '<span class="tasto">R</span>';
   canvas.requestRenderAll();
@@ -2498,10 +2528,11 @@ function apriMenu(id, ancora) {
 }
 function chiudiMenu() { $$('.menu').forEach(m => m.hidden = true); }
 document.addEventListener('pointerdown', e => {
-  if (!e.target.closest('.menu') && !e.target.closest('[data-str="forma"]') && !e.target.closest('[data-str="simboli"]') && !e.target.closest('#btnEsporta')) chiudiMenu();
+  if (!e.target.closest('.menu') && !e.target.closest('[data-str="forma"]') && !e.target.closest('[data-str="simboli"]') && !e.target.closest('[data-str="altro"]') && !e.target.closest('#btnEsporta')) chiudiMenu();
 }, true);
 function mostraPannello(v) {
   $('#pannello').hidden = !v;
+  document.body.classList.toggle('pannello-aperto', !!v);
   $('#btnPannello').classList.toggle('attivo', v);
   scriviLocale('tabula:pannello', v ? 1 : 0);
 }
@@ -2884,12 +2915,16 @@ function costruisciStrumenti() {
   const nav = $('#strumenti');
   nav.innerHTML = STRUMENTI.map(s => {
     if (!s) return '<div class="st-sep"></div>';
-    const [k, titolo, tasto] = s;
+    const [k, titolo, tasto, cls] = s;
     const icona = k === 'forma' ? iconaForma(stato.forma, 24)
       : `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONE[k]}</svg>`;
-    return `<button class="st" data-str="${k}" title="${titolo}${tasto ? ' (' + tasto + ')' : ''}" aria-label="${titolo}">${icona}${tasto ? `<span class="tasto">${tasto}</span>` : ''}</button>`;
+    return `<button class="st ${cls || ''}" data-str="${k}" title="${titolo}${tasto ? ' (' + tasto + ')' : ''}" aria-label="${titolo}">${icona}${tasto ? `<span class="tasto">${tasto}</span>` : ''}</button>`;
   }).join('');
   $$('.st').forEach(b => b.onclick = () => scegliStrumento(b.dataset.str));
+  // menu «Altro» del telefono: gli strumenti che non stanno nella barra
+  $('#menuAltro').innerHTML = STRUMENTI.filter(s => s && s[3] === 'sec').map(([k, titolo]) =>
+    `<button data-altro="${k}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONE[k]}</svg>${titolo}</button>`).join('');
+  $$('#menuAltro button').forEach(b => b.onclick = () => { chiudiMenu(); scegliStrumento(b.dataset.altro); });
   $('#grigliaForme').innerHTML = FORME.map(([k, t]) => `<button class="fb" data-f="${k}" title="${t}">${iconaForma(k)}</button>`).join('');
   $$('#grigliaForme .fb').forEach(b => b.onclick = () => { scegliForma(b.dataset.f, false); chiudiMenu(); scegliStrumento('forma'); });
 }
@@ -2900,6 +2935,7 @@ $('#btnZoomPiu').onclick = () => zoomA(canvas.getZoom() * 1.25);
 $('#zoomVal').onclick = adatta;
 $('#btnEsporta').onclick = () => apriMenu('menuEsporta', '#btnEsporta');
 $('#btnPannello').onclick = () => mostraPannello($('#pannello').hidden);
+$('#chiudiPannello').onclick = () => mostraPannello(false);
 
 async function avvia() {
   costruisciStrumenti();
