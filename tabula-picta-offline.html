@@ -71,6 +71,9 @@ svg{display:block}
 .fb:hover{background:var(--surface2)}
 .fb.attivo{background:var(--accentSoft);color:var(--accent);outline:1.5px solid var(--accent)}
 #menuSimboli{width:min(380px,calc(100vw - 90px))}
+#menuDisegni{width:min(400px,calc(100vw - 24px));max-height:min(560px,calc(100% - 100px));overflow:auto}
+.griglia-disegni{display:grid;grid-template-columns:repeat(auto-fill,minmax(48px,1fr));gap:4px;margin-bottom:10px}
+.griglia-disegni .fb{width:100%;height:50px}
 .simboli{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:10px}
 .simboli button{min-width:34px;height:34px;border-radius:7px;background:var(--surface2);font:18px/1 "Noto Serif","Times New Roman",serif}
 .simboli button:hover{background:var(--accentSoft)}
@@ -259,6 +262,8 @@ input[type=range]{flex:1;accent-color:var(--accent);min-width:80px}
     </div>
 
     <div class="menu" id="menuAltro" hidden></div>
+
+    <div class="menu" id="menuDisegni" hidden></div>
 
     <div class="menu" id="menuSimboli" hidden>
       <div id="simboliCont"></div>
@@ -971,6 +976,7 @@ const ICONE = {
   testo: '<path d="M5 6V4h14v2"/><path d="M12 4v16"/><path d="M9 20h6"/>',
   simboli: '<text x="12" y="17" text-anchor="middle" font-size="15" font-family="Georgia,serif" fill="currentColor" stroke="none">Ω</text>',
   immagine: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>',
+  disegni: '<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="15" cy="10" r="1" fill="currentColor"/><path d="M8 14.5Q12 18 16 14.5"/>',
   altro: '<circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/>',
 };
 // il quarto campo: 'sec' = sul telefono va nel menu «Altro»; 'solotel' = compare solo sul telefono
@@ -978,7 +984,7 @@ const STRUMENTI = [
   ['seleziona','Seleziona e sposta','V'], ['mano','Sposta il foglio','H','sec'], null,
   ['penna','Penna','P'], ['evid','Evidenziatore','M','sec'], ['gomma','Gomma','E'], null,
   ['forma','Forme (tocca di nuovo per sceglierne un\'altra)','R'], ['freccia','Frecce e linee','A'], ['testo','Testo','T'], null,
-  ['simboli','Simboli e lettere greche','','sec'], ['immagine','Inserisci un\'immagine','','sec'],
+  ['disegni','Disegnini: omini, volti, oggetti, antichità','D','sec'], ['simboli','Simboli e lettere greche','','sec'], ['immagine','Inserisci un\'immagine','','sec'],
   ['altro','Altri strumenti','','solotel'],
 ];
 
@@ -1059,7 +1065,7 @@ fabric.Object.prototype.set({
   cornerStyle: 'circle', cornerSize: 11, touchCornerSize: 30, padding: 3, borderScaleFactor: 1.3,
 });
 fabric.Object.prototype.controls.mtr.offsetY = -28;
-const PROPS = ['id','forma','tipoOgg','legatoA','schizzo','perPixelTargetFind','strokeUniform','stileLinea','bloccato',
+const PROPS = ['id','forma','tipoOgg','legatoA','schizzo','riempito','secondo','disegno','perPixelTargetFind','strokeUniform','stileLinea','bloccato',
   'lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','hasControls','globalCompositeOperation'];
 
 function ridimensiona() {
@@ -1841,6 +1847,7 @@ let pennaVista = false;
 
 function scegliStrumento(s) {
   if (s === 'altro') { apriMenu('menuAltro', `[data-str="altro"]`); return; }
+  if (s === 'disegni') { apriMenu('menuDisegni', window.innerWidth <= 760 ? '[data-str="altro"]' : '[data-str="disegni"]'); return; }
   if (s === 'simboli') { apriMenu('menuSimboli', `[data-str="simboli"]`); return; }
   if (s === 'immagine') { $('#fileImg').click(); return; }
   if (s === 'forma' && stato.strumento === 'forma') { apriMenu('menuForme', `[data-str="forma"]`); return; }
@@ -2002,7 +2009,7 @@ function doppioTocco(t) {
   if (t.tipoOgg === 'forma') { testoNellaForma(t); return; }
   if (t.type === 'freccia') { if (!$('#pannello').hidden) { $('#etichetta').focus(); } else { mostraPannello(true); setTimeout(() => $('#etichetta').focus(), 50); } return; }
   if (eTesto(t)) { canvas.setActiveObject(t); t.enterEditing(); }
-  if (t.type === 'group') { t.toActiveSelection(); canvas.requestRenderAll(); }
+  if (t.type === 'group' && t.tipoOgg !== 'disegno') { t.toActiveSelection(); canvas.requestRenderAll(); }
 }
 
 /* gesti a due dita: spostamento e zoom (catturati prima di Fabric) */
@@ -2144,7 +2151,7 @@ document.addEventListener('keydown', e => {
     att.set({left: att.left + dx, top: att.top + dy}); att.setCoords(); seguiLegami(att); canvas.requestRenderAll(); salvaStoria();
     return;
   }
-  const mappa = {v:'seleziona', h:'mano', p:'penna', m:'evid', e:'gomma', r:'forma', a:'freccia', t:'testo', l:'freccia'};
+  const mappa = {d:'disegni', v:'seleziona', h:'mano', p:'penna', m:'evid', e:'gomma', r:'forma', a:'freccia', t:'testo', l:'freccia'};
   const s = mappa[e.key.toLowerCase()];
   if (s) { if (s === 'forma' && stato.strumento === 'forma') return; scegliStrumento(s); }
 });
@@ -2626,7 +2633,7 @@ function sezioniVisibili() {
     if (o.tipoOgg === 'forma') { s.add('forma'); s.add('tratto'); s.add('riemp'); s.add('testo'); }
     else if (o.type === 'freccia') { s.add('freccia'); s.add('tratto'); }
     else if (eTesto(o)) s.add('testo');
-    else if (o.tipoOgg === 'tratto') s.add('tratto');
+    else if (o.tipoOgg === 'tratto' || o.tipoOgg === 'disegno') s.add('tratto');
   }
   return s;
 }
@@ -2741,7 +2748,7 @@ function costruisciPannello() {
   costruisciColori('#colEvid', COLORI_EVID, c => { stato.evid.colore = c || '#fde047'; salvaPref(); aggiornaPannello(); });
   costruisciColori('#colTratto', COLORI, c => {
     stato.tratto = c || '#111827';
-    applica(o => { if (o.tipoOgg === 'tratto') o.set({fill: stato.tratto}); else if (o.tipoOgg === 'forma' || o.type === 'freccia') o.set({stroke: stato.tratto}); });
+    applica(o => { if (o.tipoOgg === 'tratto') o.set({fill: stato.tratto}); else if (o.tipoOgg === 'disegno') coloraDisegno(o, stato.tratto); else if (o.tipoOgg === 'forma' || o.type === 'freccia') o.set({stroke: stato.tratto}); });
   });
   costruisciColori('#colRiemp', COLORI, c => {
     stato.riemp = c;
@@ -2764,6 +2771,7 @@ function costruisciPannello() {
   range('#spTratto', v => {
     stato.spessore = v; $('#spTrattoV').textContent = v;
     selezionati().forEach(o => {
+      if (o.tipoOgg === 'disegno') spessoreDisegno(o, Math.max(1, v));
       if (o.tipoOgg === 'forma') o.set({strokeWidth: v, ...stileLineaObj(o.stileLinea || 'continua', v)});
       if (o.type === 'freccia') { const p1 = o.assoluto(1), p2 = o.assoluto(2); o.set({strokeWidth: Math.max(v, .5)}); o.impostaAssoluti(p1, p2); }
     });
@@ -2932,7 +2940,7 @@ function apriMenu(id, ancora) {
 }
 function chiudiMenu() { $$('.menu').forEach(m => m.hidden = true); }
 document.addEventListener('pointerdown', e => {
-  if (!e.target.closest('.menu') && !e.target.closest('[data-str="forma"]') && !e.target.closest('[data-str="simboli"]') && !e.target.closest('[data-str="altro"]') && !e.target.closest('#btnEsporta')) chiudiMenu();
+  if (!e.target.closest('.menu') && !e.target.closest('[data-str="forma"]') && !e.target.closest('[data-str="simboli"]') && !e.target.closest('[data-str="altro"]') && !e.target.closest('[data-str="disegni"]') && !e.target.closest('#btnEsporta')) chiudiMenu();
 }, true);
 function mostraPannello(v) {
   $('#pannello').hidden = !v;
@@ -3314,6 +3322,118 @@ async function disegnaEsempio() {
   canvas.requestRenderAll();
 }
 
+/* ---------------------------------------------------------------- disegnini stilizzati (omini, volti, oggetti, antichità) */
+// ogni disegno è SVG in un riquadro 100 × 100; fill="#000" = parte piena (prende il colore scelto)
+const DISEGNI = {
+  'Persone': [
+    ['omino', 'Omino', '<circle cx="50" cy="18" r="10"/><path d="M50 28V62M30 44L50 36L70 44M50 62L36 90M50 62L64 90"/>'],
+    ['saluta', 'Omino che saluta', '<circle cx="46" cy="20" r="10"/><path d="M46 30V62M46 40L28 54M46 40L64 30L70 12M46 62L34 90M46 62L58 90"/>'],
+    ['corre', 'Omino che corre', '<circle cx="58" cy="16" r="9"/><path d="M55 26L46 56M53 34L66 44L76 36M53 34L38 38L30 50M46 56L60 70L56 88M46 56L34 72L20 72"/>'],
+    ['pensa', 'Omino che pensa', '<circle cx="42" cy="26" r="10"/><path d="M42 36V66M42 44L58 50L52 36M42 44L28 56M42 66L32 92M42 66L52 92"/><circle cx="64" cy="18" r="3"/><circle cx="74" cy="11" r="4.5"/><path d="M78 2Q86 -4 92 4Q98 10 90 14Q84 18 78 12Q72 8 78 2Z"/>'],
+    ['braccia', 'Omino a braccia alzate', '<circle cx="50" cy="22" r="10"/><path d="M50 32V64M50 40L30 22M50 40L70 22M50 64L36 92M50 64L64 92"/>'],
+    ['coppia', 'Due persone', '<circle cx="30" cy="24" r="9"/><path d="M30 33V62M16 46L30 40L44 46M30 62L20 88M30 62L40 88"/><circle cx="70" cy="24" r="9"/><path d="M70 33V62M56 46L70 40L84 46M70 62L60 88M70 62L80 88"/>'],
+    ['gruppo', 'Gruppo', '<circle cx="50" cy="20" r="9"/><path d="M50 29V56M38 42L50 36L62 42M50 56L42 80M50 56L58 80"/><circle cx="20" cy="34" r="7"/><path d="M20 41V64M11 52L20 47L29 52M20 64L14 84M20 64L26 84"/><circle cx="80" cy="34" r="7"/><path d="M80 41V64M71 52L80 47L89 52M80 64L74 84M80 64L86 84"/>'],
+    ['maestro', 'Insegnante alla lavagna', '<path d="M50 10H94V50H50Z"/><path d="M57 22H86M57 31H80M57 40H72"/><circle cx="24" cy="30" r="9"/><path d="M24 39V68M24 47L44 38M24 47L12 60M24 68L14 92M24 68L34 92"/>'],
+    ['bambino', 'Bambino', '<circle cx="50" cy="34" r="13"/><path d="M50 47V70M36 58L50 52L64 58M50 70L40 92M50 70L60 92M42 30H44M56 30H58M44 39Q50 43 56 39"/>'],
+  ],
+  'Volti': [
+    ['felice', 'Volto felice', '<circle cx="50" cy="50" r="40"/><circle cx="36" cy="40" r="4" fill="#000"/><circle cx="64" cy="40" r="4" fill="#000"/><path d="M30 58Q50 78 70 58"/>'],
+    ['triste', 'Volto triste', '<circle cx="50" cy="50" r="40"/><circle cx="36" cy="40" r="4" fill="#000"/><circle cx="64" cy="40" r="4" fill="#000"/><path d="M32 72Q50 58 68 72M27 34L40 28M73 34L60 28"/>'],
+    ['sorpreso', 'Volto sorpreso', '<circle cx="50" cy="50" r="40"/><circle cx="36" cy="40" r="6"/><circle cx="64" cy="40" r="6"/><circle cx="36" cy="40" r="2" fill="#000"/><circle cx="64" cy="40" r="2" fill="#000"/><ellipse cx="50" cy="68" rx="7" ry="9"/><path d="M28 26L42 28M72 26L58 28"/>'],
+    ['arrabbiato', 'Volto arrabbiato', '<circle cx="50" cy="50" r="40"/><path d="M26 30L42 38M74 30L58 38M34 70Q50 60 66 70"/><circle cx="37" cy="44" r="4" fill="#000"/><circle cx="63" cy="44" r="4" fill="#000"/>'],
+    ['dubbioso', 'Volto dubbioso', '<circle cx="50" cy="50" r="40"/><circle cx="36" cy="42" r="4" fill="#000"/><circle cx="64" cy="42" r="4" fill="#000"/><path d="M28 32L42 30M58 26L72 32M36 66Q46 62 64 68"/>'],
+    ['ride', 'Volto che ride', '<circle cx="50" cy="50" r="40"/><path d="M28 40Q35 32 42 40M58 40Q65 32 72 40M28 56H72Q70 80 50 80Q30 80 28 56Z"/>'],
+    ['occhio', 'Occhio', '<path d="M6 50Q50 10 94 50Q50 90 6 50Z"/><circle cx="50" cy="50" r="17"/><circle cx="50" cy="50" r="7" fill="#000"/><path d="M28 30L22 20M50 22V11M72 30L78 20"/>'],
+    ['occhi', 'Due occhi', '<path d="M4 50Q24 30 44 50Q24 70 4 50Z"/><circle cx="24" cy="50" r="7" fill="#000"/><path d="M56 50Q76 30 96 50Q76 70 56 50Z"/><circle cx="76" cy="50" r="7" fill="#000"/>'],
+    ['profilo', 'Testa di profilo', '<path d="M62 92V78Q80 76 78 62L86 60L80 50Q86 46 80 40Q80 14 52 10Q22 8 20 38Q18 60 34 70V92"/><circle cx="64" cy="38" r="3" fill="#000"/><path d="M46 38Q40 46 46 52"/>'],
+    ['mano', 'Mano', '<path d="M34 92V58L22 44Q18 38 24 36Q28 34 32 40L38 48V16Q38 10 44 10Q50 10 50 16V42V10Q50 4 56 4Q62 4 62 10V42V14Q62 8 68 8Q74 8 74 14V46V24Q74 18 80 18Q86 18 86 24V60Q86 76 74 84V92"/>'],
+  ],
+  'Oggetti': [
+    ['libro', 'Libro aperto', '<path d="M50 26Q30 14 8 22V82Q30 74 50 86Q70 74 92 82V22Q70 14 50 26Z"/><path d="M50 26V86M16 36Q30 32 42 38M16 48Q30 44 42 50M58 38Q70 32 84 36M58 50Q70 44 84 48"/>'],
+    ['idea', 'Lampadina (idea)', '<path d="M38 64Q22 50 26 32Q32 10 50 10Q68 10 74 32Q78 50 62 64V72H38Z"/><path d="M40 80H60M42 88H58M43 60L46.5 48L50 58L53.5 48L57 60"/><path d="M8 30L16 32M92 30L84 32M18 8L24 14M82 8L76 14"/>'],
+    ['matita', 'Matita', '<path d="M22 70L68 24L78 34L32 80Z"/><path d="M22 70L14 88L32 80M62 30L72 40"/><path d="M18 80L14 88L22 84" fill="#000"/>'],
+    ['casa', 'Casa', '<path d="M14 50L50 16L86 50M24 42V86H76V42"/><path d="M30 86V62H44V86M56 56H68V68H56ZM62 56V68M56 62H68"/>'],
+    ['albero', 'Albero', '<path d="M44 92V64M56 92V64"/><path d="M50 66Q28 72 22 56Q10 46 22 34Q22 16 40 16Q48 6 60 12Q78 10 80 30Q92 40 82 54Q76 70 50 66Z"/>'],
+    ['sole', 'Sole', '<circle cx="50" cy="50" r="17"/><path d="M50 8V22M50 78V92M8 50H22M78 50H92M20 20L30 30M70 70L80 80M80 20L70 30M30 70L20 80"/>'],
+    ['luna', 'Luna', '<path d="M58 10A40 40 0 1 0 90 66A32 32 0 1 1 58 10Z"/><path d="M20 16L22 22L28 24L22 26L20 32L18 26L12 24L18 22Z"/>'],
+    ['stella', 'Stella', '<path d="M50 8L61 38L94 38L67 57L77 90L50 70L23 90L33 57L6 38L39 38Z"/>'],
+    ['cuore', 'Cuore', '<path d="M50 88C14 62 6 44 10 28C14 12 34 8 50 26C66 8 86 12 90 28C94 44 86 62 50 88Z"/>'],
+    ['chiave', 'Chiave', '<circle cx="26" cy="50" r="15"/><circle cx="26" cy="50" r="5"/><path d="M41 50H90M80 50V64M68 50V60"/>'],
+    ['orologio', 'Orologio', '<circle cx="50" cy="50" r="40"/><path d="M50 50V24M50 50L68 60M50 14V20M50 80V86M14 50H20M80 50H86"/>'],
+    ['lente', 'Lente', '<circle cx="40" cy="40" r="26"/><path d="M59 59L88 88M30 30Q36 24 44 26"/>'],
+    ['bandiera', 'Bandiera', '<path d="M22 92V8"/><path d="M22 12Q40 4 56 14Q72 22 86 14V46Q72 54 56 46Q40 36 22 44"/>'],
+    ['fumetto', 'Nuvoletta', '<path d="M18 14H82Q92 14 92 24V56Q92 66 82 66H44L26 86L30 66H18Q8 66 8 56V24Q8 14 18 14Z"/><path d="M24 32H76M24 46H62"/>'],
+    ['domanda', 'Punto di domanda', '<path d="M32 30Q32 10 52 10Q72 10 72 28Q72 42 54 48V64"/><circle cx="54" cy="82" r="5" fill="#000"/>'],
+    ['esclamativo', 'Punto esclamativo', '<path d="M50 10V64"/><circle cx="50" cy="82" r="5" fill="#000"/>'],
+    ['bersaglio', 'Obiettivo', '<circle cx="46" cy="54" r="38"/><circle cx="46" cy="54" r="24"/><circle cx="46" cy="54" r="9"/><path d="M46 54L90 10M80 8L90 10L92 20"/>'],
+    ['lettera', 'Lettera', '<path d="M8 22H92V78H8Z"/><path d="M8 22L50 56L92 22M8 78L38 48M92 78L62 48"/>'],
+    ['mappa', 'Mappa', '<path d="M8 20L34 10L66 22L92 12V80L66 90L34 78L8 88Z"/><path d="M34 10V78M66 22V90"/><path d="M42 40L50 48M50 40L42 48"/>'],
+    ['cervello', 'Mente', '<path d="M50 16Q42 6 30 12Q16 12 16 28Q6 36 12 50Q8 66 22 72Q26 86 42 82Q48 88 50 82V16Z"/><path d="M50 16Q58 6 70 12Q84 12 84 28Q94 36 88 50Q92 66 78 72Q74 86 58 82Q52 88 50 82"/><path d="M28 32Q36 34 34 44M24 56Q34 54 38 62M72 32Q64 34 66 44M76 56Q66 54 62 62"/>'],
+  ],
+  'Antichità': [
+    ['colonna', 'Colonna', '<path d="M22 14H78M28 22H72"/><circle cx="28" cy="24" r="6"/><circle cx="72" cy="24" r="6"/><path d="M36 30V84M64 30V84M45 32V82M55 32V82M28 86H72M22 92H78"/>'],
+    ['tempio', 'Tempio', '<path d="M10 34L50 10L90 34Z"/><path d="M12 40H88M20 44V82M36 44V82M64 44V82M80 44V82M8 86H92M4 92H96"/><circle cx="50" cy="26" r="4"/>'],
+    ['anfora', 'Anfora', '<path d="M40 10H60M42 10Q42 24 46 28Q22 40 28 66Q34 88 50 90Q66 88 72 66Q78 40 54 28Q58 24 58 10"/><path d="M44 30Q28 28 30 46M56 30Q72 28 70 46M30 58Q50 64 70 58M34 70Q50 76 66 70"/>'],
+    ['rotolo', 'Rotolo di papiro', '<path d="M20 14H74Q82 14 82 22V78"/><path d="M20 14Q12 14 12 22Q12 30 20 30H28V80Q28 88 36 88H84Q92 88 92 80Q92 72 84 72H28"/><path d="M20 14Q28 14 28 22V30M40 40H70M40 50H70M40 60H62"/>'],
+    ['elmo', 'Elmo', '<path d="M22 88V48Q22 16 50 16Q78 16 78 48V88H62Q60 76 56 72V54H44V72Q40 76 38 88Z"/><path d="M30 50H44M56 50H70M24 24Q50 -2 76 24M32 14L30 6M42 9L41 1M50 8V0M58 9L59 1M68 14L70 6"/>'],
+    ['alloro', 'Corona d\'alloro', '<path d="M46 88Q16 78 18 40M54 88Q84 78 82 40"/><path d="M20 46Q8 42 10 32Q20 34 20 46ZM24 62Q12 62 10 52Q22 52 24 62ZM34 76Q22 80 18 70Q30 68 34 76ZM80 46Q92 42 90 32Q80 34 80 46ZM76 62Q88 62 90 52Q78 52 76 62ZM66 76Q78 80 82 70Q70 68 66 76Z"/>'],
+    ['lira', 'Lira', '<path d="M30 88H70M36 88Q18 66 24 42Q28 24 16 10M64 88Q82 66 76 42Q72 24 84 10M23 32H77M42 32V88M50 32V88M58 32V88"/>'],
+    ['civetta', 'Civetta', '<path d="M50 92Q22 92 22 60Q22 32 32 22L28 8L42 18Q50 16 58 18L72 8L68 22Q78 32 78 60Q78 92 50 92Z"/><circle cx="40" cy="40" r="9"/><circle cx="60" cy="40" r="9"/><circle cx="40" cy="40" r="3" fill="#000"/><circle cx="60" cy="40" r="3" fill="#000"/><path d="M46 52L50 60L54 52M34 70Q42 66 50 70Q58 66 66 70M38 80Q46 76 50 80Q54 76 62 80"/>'],
+    ['lucerna', 'Lucerna', '<path d="M12 62Q12 48 40 48H62L84 40Q92 44 86 52L64 64Q58 72 40 72Q12 72 12 62Z"/><path d="M86 36Q78 24 88 10Q98 24 88 36Z"/><path d="M12 58Q2 52 8 44M34 48Q40 40 46 48"/>'],
+    ['nave', 'Nave', '<path d="M6 60H94L82 76H18Z"/><path d="M50 60V12M50 14Q76 30 50 52M24 76L18 90M38 76L34 90M50 76V90M62 76L66 90M76 76L82 90M6 60Q2 52 8 48"/>'],
+    ['spada', 'Spada', '<path d="M50 6L57 18V64H43V18Z"/><path d="M30 64H70M50 66V84"/><circle cx="50" cy="89" r="5"/>'],
+    ['scudo', 'Scudo', '<circle cx="50" cy="50" r="40"/><circle cx="50" cy="50" r="31"/><path d="M36 68L50 32L64 68"/>'],
+    ['maschera', 'Maschera teatrale', '<path d="M18 16Q50 4 82 16Q90 60 50 94Q10 60 18 16Z"/><path d="M28 38Q36 30 44 38Q36 44 28 38ZM56 38Q64 30 72 38Q64 44 56 38Z"/><path d="M32 62Q50 82 68 62Q50 70 32 62Z"/>'],
+    ['moneta', 'Moneta', '<circle cx="50" cy="50" r="40"/><circle cx="50" cy="50" r="33"/><path d="M38 62Q30 48 40 36Q50 28 58 36Q62 42 58 46Q66 48 62 58Q56 68 44 66"/><circle cx="52" cy="42" r="2" fill="#000"/>'],
+    ['bilancia', 'Bilancia (giustizia)', '<path d="M50 10V88M34 88H66M16 26H84"/><path d="M16 26L6 54H26ZM84 26L74 54H94Z"/><path d="M6 54Q16 64 26 54M74 54Q84 64 94 54"/>'],
+  ],
+};
+function svgDisegno(inner, spessore = 3.2, colore = '#111827') {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g fill="none" stroke="${colore}" stroke-width="${spessore}" stroke-linecap="round" stroke-linejoin="round">${inner}</g>`
+    + `<g fill="none" stroke="${colore}" stroke-width="${spessore * .55}" stroke-linecap="round" stroke-linejoin="round" transform="translate(1.3 .9) rotate(.9 50 50)">${inner}</g></svg>`;
+}
+function trovaDisegno(nome) { for (const lista of Object.values(DISEGNI)) for (const d of lista) if (d[0] === nome) return d; return null; }
+function inserisciDisegno(nome) {
+  const d = trovaDisegno(nome);
+  if (!d) return;
+  const colore = stato.tratto || '#1f2937', sp = Math.max(2.4, stato.spessore + .8);
+  fabric.loadSVGFromString(svgDisegno(d[2], sp, colore), (objs, opts) => {
+    if (!objs || !objs.length) { avviso('Questo disegno non si è potuto inserire.'); return; }
+    const meta = objs.length / 2;
+    objs.forEach((o, i) => {
+      const pieno = o.fill && o.fill !== 'none' && o.fill !== '';
+      o.set({riempito: !!pieno, secondo: i >= meta, fill: pieno ? colore : '', stroke: colore, strokeLineCap: 'round', strokeLineJoin: 'round',
+        opacity: i >= meta ? .7 : 1});
+    });
+    const g = fabric.util.groupSVGElements(objs, opts);
+    if (g.type !== 'group') return;
+    const v = canvas.viewportTransform;
+    const lato = 150 / v[0] * Math.min(1, v[0]);
+    const k = lato / Math.max(g.width, g.height);
+    g.set({scaleX: k, scaleY: k, tipoOgg: 'disegno', disegno: nome});
+    g.setPositionByOrigin(new fabric.Point((canvas.getWidth() / 2 - v[4]) / v[0], (canvas.getHeight() / 2 - v[5]) / v[3]), 'center', 'center');
+    canvas.add(g);
+    scegliStrumento('seleziona');
+    canvas.setActiveObject(g);
+    canvas.requestRenderAll();
+  });
+}
+function coloraDisegno(g, c) {
+  g.getObjects().forEach(o => o.set({stroke: c, fill: o.riempito ? c : ''}));
+  g.set({dirty: true});
+}
+function spessoreDisegno(g, v) {
+  g.getObjects().forEach(o => o.set({strokeWidth: o.secondo ? v * .55 : v}));
+  g.set({dirty: true});
+}
+function costruisciDisegni() {
+  $('#menuDisegni').innerHTML = '<h4 style="margin-top:0">Disegnini</h4>' + Object.entries(DISEGNI).map(([cat, lista]) =>
+    `<h4>${cat}</h4><div class="griglia-disegni">${lista.map(([k, t, inner]) =>
+      `<button class="fb" data-disegno="${k}" title="${t}"><svg width="34" height="34" viewBox="-4 -4 108 108" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">${inner.replace(/#000/g, 'currentColor')}</svg></button>`).join('')}</div>`).join('')
+    + '<p class="nota">Il disegnino compare al centro del foglio: lo ingrandisci con le maniglie, lo colori con Modifica → Linea, lo colleghi con le frecce.</p>';
+  $$('#menuDisegni [data-disegno]').forEach(b => b.onclick = () => { chiudiMenu(); inserisciDisegno(b.dataset.disegno); });
+}
+
 /* ---------------------------------------------------------------- avvio */
 function costruisciStrumenti() {
   const nav = $('#strumenti');
@@ -3345,6 +3465,7 @@ async function avvia() {
   costruisciStrumenti();
   costruisciPannello();
   costruisciSimboli();
+  costruisciDisegni();
   linkFont(infoFont(stato.font));
   const pv = leggiLocale('tabula:pannello');
   mostraPannello(pv === null ? window.innerWidth > 760 : !!pv);
