@@ -118,6 +118,8 @@ input[type=range]{flex:1;accent-color:var(--accent);min-width:80px}
 #barraSel button:hover{background:var(--surface2)}
 #barraSel #selElimina{color:var(--danger)}
 #barraSel #selModifica{color:var(--accent)}
+#barraSel #selIncornicia{color:#15803d}
+:root[data-theme="dark"] #barraSel #selIncornicia{color:#86efac}
 #barraSel #selModifica.attivo{background:var(--accentSoft)}
 #pannello.lampo{animation:lampo .9s ease-out}
 @keyframes lampo{0%{box-shadow:0 0 0 4px var(--accent)}100%{box-shadow:var(--ombra)}}
@@ -225,6 +227,7 @@ input[type=range]{flex:1;accent-color:var(--accent);min-width:80px}
     <canvas id="c"></canvas>
 
     <div id="barraSel" hidden>
+      <button id="selIncornicia" title="Racchiudi la scritta in una forma" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="4"/><path d="M8 9h8M12 9v7"/></svg>Incornicia</button>
       <button id="selModifica" title="Modifica dimensione, colori, forma e testo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4L16 5a2.1 2.1 0 0 1 3 3L8 19z"/><path d="M14 7l3 3"/></svg>Modifica</button>
       <button id="selElimina" title="Elimina (⌫)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Elimina</button>
       <button id="selAnnulla" title="Annulla (⌘Z)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Annulla</button>
@@ -346,6 +349,10 @@ input[type=range]{flex:1;accent-color:var(--accent);min-width:80px}
         <div class="colori" id="colEvTesto"></div>
         <div class="riga"><label for="interlinea">Interlinea</label><input type="range" id="interlinea" min="0.8" max="2.4" step="0.05"><span class="num" id="interlineaV"></span></div>
         <p class="nota">Mentre scrivi, seleziona alcune parole per cambiare solo quelle.</p>
+        <div id="boxIncornicia" hidden>
+          <div class="riga"><label>Racchiudi la scritta in una forma</label></div>
+          <div class="griglia-forme" id="grigliaIncornicia" style="grid-template-columns:repeat(5,1fr);margin-top:6px"></div>
+        </div>
       </section>
       <section data-sez="disponi">
         <h3>Disponi</h3>
@@ -2077,6 +2084,7 @@ function aggiornaRami() {
   const box = $('#ramiTela');
   const att = canvas.getActiveObject();
   $('#barraSel').hidden = !att || !!op || !!gesto;
+  $('#selIncornicia').hidden = !scritteLibere().length;
   $('#selAnnulla').disabled = storia.length < 2;
   const s = (stato.strumento === 'seleziona' || stato.strumento === 'testo') && !op && !gesto && !canvas._currentTransform
     && att && att.type !== 'activeSelection' && !att.bloccato ? formaDi(att) : null;
@@ -2098,6 +2106,53 @@ $$('#ramiTela button, #rami button').forEach(b => {
 ['#selElimina', '#selAnnulla'].forEach(id => $(id).addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); }));
 $('#selElimina').onclick = elimina;
 $('#selModifica').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); });
+$('#selIncornicia').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); });
+$('#selIncornicia').onclick = () => incornicia();
+// scritte libere selezionate (non quelle già dentro una forma)
+function scritteLibere() { return selezionati().filter(o => eTesto(o) && !o.legatoA && !o.group); }
+// racchiude ogni scritta libera selezionata in una forma: la scritta diventa il testo di un nodo
+const FORME_STRETTE = new Set(['rett', 'arrotondato', 'cartiglio', 'documento', 'pergamena', 'quadra', 'graffa']);
+function incornicia(nome = stato.forma) {
+  const att = canvas.getActiveObject();
+  if (att && att.isEditing) att.exitEditing();
+  const scritte = scritteLibere().filter(t => t.canvas && (t.text || '').trim());
+  if (!scritte.length) { avviso('Seleziona prima una scritta libera.'); return; }
+  canvas.discardActiveObject();
+  const forme = [];
+  sospendiStoria = true;
+  for (const t of scritte) {
+    const c = centroAss(t);
+    const k = t.scaleX || 1;
+    const tw = t.width * k, th = t.height * (t.scaleY || 1);
+    const largo = FORME_STRETTE.has(nome) ? 1 : 1.4;
+    const w = Math.max(150, (tw / 0.84 + 44) * largo), h = Math.max(76, (th + 56) * largo);
+    const s = creaForma(nome, c.x - w / 2, c.y - h / 2, w, h, {angle: 0});
+    const nt = new fabric.Textbox(t.text, {
+      fontFamily: t.fontFamily, fontSize: t.fontSize * k, fill: t.fill, fontWeight: t.fontWeight, fontStyle: t.fontStyle,
+      underline: t.underline, linethrough: t.linethrough, textBackgroundColor: t.textBackgroundColor, lineHeight: t.lineHeight,
+      styles: structuredClone(t.styles || {}), textAlign: 'center', legatoA: null, tipoOgg: 'testo', splitByGrapheme: false,
+      editingBorderColor: 'rgba(0,0,0,0)', hasControls: false, cursorColor: '#1d5bb8', selectionColor: 'rgba(29,91,184,.22)',
+    });
+    const idx = canvas.getObjects().indexOf(t);
+    canvas.remove(t);
+    canvas.insertAt(s, idx);
+    nt.legatoA = s.id;
+    canvas.add(nt);
+    adattaTesto(nt, s);
+    // le frecce che puntavano alla scritta ora puntano alla forma
+    for (const f of canvas.getObjects()) if (f.type === 'freccia') {
+      if (f.da && f.da.id === t.id) f.da = {id: s.id};
+      if (f.a && f.a.id === t.id) f.a = {id: s.id};
+    }
+    forme.push(s);
+  }
+  sospendiStoria = false;
+  aggiornaLegami();
+  ripristinaSelezione(forme);
+  salvaStoria();
+  aggiornaPannello();
+  avviso(forme.length > 1 ? 'Scritte incorniciate: con Modifica cambi forma e colori.' : 'Scritta incorniciata: con Modifica cambi forma e colori, con i + aggiungi rami.');
+}
 $('#selModifica').onclick = modifica;
 // «Modifica»: seleziona il nodo intero (non solo il suo testo) e apre il pannello delle proprietà
 function modifica() {
@@ -2268,6 +2323,7 @@ function aggiornaPannello() {
   $('#ombra').checked = forma ? !!forma.shadow : stato.ombra;
   const nomeF = forma ? forma.forma : stato.forma;
   $$('#grigliaFormePannello .fb').forEach(b => b.classList.toggle('attivo', b.dataset.f === nomeF));
+  $('#boxIncornicia').hidden = !scritteLibere().length;
   const fs = formeSelezionate();
   $('#boxDim').hidden = !fs.length;
   if (fs.length) { $('#larghezza').value = Math.round(fs[0].width * fs[0].scaleX); $('#altezza').value = Math.round(fs[0].height * fs[0].scaleY); }
@@ -2386,6 +2442,11 @@ function costruisciPannello() {
   $('#ombra').onchange = e => { stato.ombra = e.target.checked; applica(o => { if (o.tipoOgg === 'forma') o.set({shadow: stato.ombra ? ombraStd() : null}); }); };
   $('#grigliaFormePannello').innerHTML = FORME.map(([k, t]) => `<button class="fb" data-f="${k}" title="${t}">${iconaForma(k)}</button>`).join('');
   $$('#grigliaFormePannello .fb').forEach(b => b.onclick = () => scegliForma(b.dataset.f, true));
+  $('#grigliaIncornicia').innerHTML = FORME.filter(([k]) => !SENZA_RIEMPIMENTO.has(k)).map(([k, t]) => `<button class="fb" data-f="${k}" title="${t}">${iconaForma(k)}</button>`).join('');
+  $$('#grigliaIncornicia .fb').forEach(b => {
+    b.addEventListener('pointerdown', e => e.preventDefault());
+    b.onclick = () => { stato.forma = b.dataset.f; salvaPref(); incornicia(b.dataset.f); };
+  });
   range('#spAngoli', v => {
     stato.angoli = v; $('#spAngoliV').textContent = v;
     selezionati().forEach(o => { if (o.type === 'rect') o.set({rx: v, ry: v, forma: v ? 'arrotondato' : 'rett'}); });
