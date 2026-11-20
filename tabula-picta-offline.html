@@ -291,8 +291,8 @@ input[type=range]{flex:1;accent-color:var(--accent);min-width:80px}
       </section>
       <section data-sez="gomma">
         <h3>Gomma</h3>
-        <p class="nota">Passa sopra un tratto per cancellarlo tutto intero.</p>
-        <label class="spunta"><input type="checkbox" id="gommaTutto"> Cancella anche forme, frecce, testi e immagini</label>
+        <p class="nota">Passa sopra ciò che vuoi cancellare: tratti, forme, frecce, scritte. Un nodo se ne va con il suo testo e le sue frecce; se sbagli, Annulla.</p>
+        <label class="spunta"><input type="checkbox" id="gommaSoloTratti"> Cancella solo i tratti a mano (non forme, frecce, scritte e immagini)</label>
       </section>
       <section data-sez="forma">
         <h3>Forma</h3>
@@ -984,7 +984,7 @@ const PREF_DEFAULT = {
   freccia:{tipo:'dritta', inizio:'nessuna', fine:'triangolo', punta:13},
   font:'EB Garamond', dimFont:26, coloreTesto:'#111827', interlinea:1.16,
   penna:{colore:'#1f2937', spessore:3.5, pressione:true}, evid:{colore:'#fde047', spessore:22},
-  gommaTutto:false, soloPenna:false, tieni:false, fontAggiunti:[], riconosci:true,
+  gommaSoloTratti:false, soloPenna:false, tieni:false, fontAggiunti:[], riconosci:true,
 };
 const stato = Object.assign(structuredClone(PREF_DEFAULT), leggiLocale('tabula:pref') || {}, {strumento:'seleziona'});
 const foglio = {sfondo:'bianco', griglia:'puntini'};
@@ -1695,16 +1695,23 @@ function applicaRiconoscimento(r, t, trattoObj) {
 }
 
 /* ---------------------------------------------------------------- gomma */
+// controlla tutto il percorso della gomma dall'ultimo punto, non solo i punti rilevati: così non salta le linee sottili
 function cancellaSotto(e) {
   const sp = canvas.getPointer(e, true);
+  const prec = (op && op.ultimo) || sp;
+  const n = Math.max(1, Math.ceil(Math.hypot(sp.x - prec.x, sp.y - prec.y) / 6));
+  for (let k = 1; k <= n; k++) cancellaInPunto({x: prec.x + (sp.x - prec.x) * k / n, y: prec.y + (sp.y - prec.y) * k / n});
+  if (op) op.ultimo = sp;
+}
+function cancellaInPunto(sp) {
   const objs = canvas.getObjects().slice();
   for (let i = objs.length - 1; i >= 0; i--) {
     const o = objs[i];
     if (!o.canvas) continue;   // già tolto insieme al suo nodo
-    if (!stato.gommaTutto && o.tipoOgg !== 'tratto') continue;
+    if (stato.gommaSoloTratti && o.tipoOgg !== 'tratto') continue;
     if (o.bloccato) continue;
     if (o.containsPoint(sp) && !canvas.isTargetTransparent(o, sp.x, sp.y)) {
-      if (o.tipoOgg === 'forma') daEliminare([o]).forEach(x => canvas.remove(x)); else canvas.remove(o);
+      if (o.tipoOgg === 'forma' || o.legatoA) daEliminare([o]).forEach(x => canvas.remove(x)); else canvas.remove(o);
     }
   }
 }
@@ -2576,7 +2583,7 @@ function aggiornaPannello() {
   $('#riconosci').checked = stato.riconosci;
   segnaColore('#colEvid', stato.evid.colore);
   $('#spEvid').value = stato.evid.spessore; $('#spEvidV').textContent = stato.evid.spessore;
-  $('#gommaTutto').checked = stato.gommaTutto;
+  $('#gommaSoloTratti').checked = stato.gommaSoloTratti;
   segnaColore('#colSfondo', SFONDI[foglio.sfondo] || foglio.sfondo);
   $$('#tipiGriglia button').forEach(b => b.classList.toggle('attivo', b.dataset.gr === foglio.griglia));
   $('#soloPenna').checked = stato.soloPenna;
@@ -2635,7 +2642,7 @@ function costruisciPannello() {
   range('#spEvid', v => { stato.evid.spessore = v; $('#spEvidV').textContent = v; salvaPref(); });
   $('#pressione').onchange = e => { stato.penna.pressione = e.target.checked; salvaPref(); };
   $('#riconosci').onchange = e => { stato.riconosci = e.target.checked; salvaPref(); };
-  $('#gommaTutto').onchange = e => { stato.gommaTutto = e.target.checked; salvaPref(); };
+  $('#gommaSoloTratti').onchange = e => { stato.gommaSoloTratti = e.target.checked; salvaPref(); };
   range('#spTratto', v => {
     stato.spessore = v; $('#spTrattoV').textContent = v;
     selezionati().forEach(o => {
