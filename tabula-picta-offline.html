@@ -111,6 +111,9 @@ input[type=range]{flex:1;accent-color:var(--accent);min-width:80px}
 .azioni button[disabled]{opacity:.35;cursor:default;background:var(--surface2);color:inherit}
 /* pulsanti «+» per le diramazioni, attorno alla forma selezionata */
 #ramiTela{position:absolute;inset:0;pointer-events:none;z-index:4}
+#bollaNota{position:absolute;z-index:4;max-width:min(280px,calc(100% - 24px));max-height:40%;overflow:auto;padding:9px 13px;border-radius:12px;background:#fffbe6;color:#422006;border:1px solid #eacb70;box-shadow:var(--ombra);font:14px/1.45 var(--ui);white-space:pre-wrap;pointer-events:none}
+#testoNota{min-height:96px;resize:vertical;font:14px/1.45 var(--ui)}
+.riordina button{font-size:12.5px;white-space:nowrap;padding:0 4px}
 #ramiTela button{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;pointer-events:auto;
   display:grid;place-items:center;background:var(--accent);color:#fff;border:2px solid #fff;box-shadow:0 2px 8px rgba(18,28,48,.28);opacity:.88}
 #ramiTela button:hover{opacity:1;transform:scale(1.1)}
@@ -193,7 +196,7 @@ input[type=range]{flex:1;accent-color:var(--accent);min-width:80px}
   #barraSel{max-width:calc(100% - 12px)}
 }
 @media (max-width:400px){
-  #barraSel #selElimina .et{display:none}
+  #barraSel #selElimina .et,#barraSel #selRami .et{display:none}
   #barraSel button{padding:0 8px}
 }
 .st.solotel{display:none}
@@ -239,10 +242,13 @@ input[type=range]{flex:1;accent-color:var(--accent);min-width:80px}
     <div id="barraSel" hidden>
       <button id="selIncornicia" title="Racchiudi la scritta in una forma" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="4"/><path d="M8 9h8M12 9v7"/></svg><span class="et">Incornicia</span></button>
       <button id="selCollega" title="Collega con una freccia a un'altra forma" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="9" width="6" height="6" rx="1.5"/><rect x="16" y="9" width="6" height="6" rx="1.5"/><path d="M8 12h7"/><path d="m12.5 9.5 2.5 2.5-2.5 2.5"/></svg><span class="et">Collega</span></button>
+      <button id="selRami" title="Chiudi o apri i rami che partono da questo nodo" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="9" width="7" height="6" rx="1.5"/><path d="M9 12h4M13 6v12M13 6h3M13 18h3"/><rect x="16" y="3" width="6" height="6" rx="1.5"/><rect x="16" y="15" width="6" height="6" rx="1.5"/></svg><span class="et">Chiudi rami</span></button>
       <button id="selModifica" title="Modifica dimensione, colori, forma e testo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4L16 5a2.1 2.1 0 0 1 3 3L8 19z"/><path d="M14 7l3 3"/></svg><span class="et">Modifica</span></button>
       <button id="selElimina" title="Elimina (⌫)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg><span class="et">Elimina</span></button>
       <button id="selAnnulla" title="Annulla (⌘Z)" aria-label="Annulla"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span class="et">Annulla</span></button>
     </div>
+
+    <div id="bollaNota" hidden></div>
 
     <div id="ramiTela" hidden>
       <button data-ramo="sopra" title="Diramazione sopra (⌥↑)" aria-label="Diramazione sopra"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
@@ -372,6 +378,11 @@ input[type=range]{flex:1;accent-color:var(--accent);min-width:80px}
           <div class="griglia-forme" id="grigliaIncornicia" style="grid-template-columns:repeat(5,1fr);margin-top:6px"></div>
         </div>
       </section>
+      <section data-sez="nota">
+        <h3>Nota</h3>
+        <textarea class="campo" id="testoNota" placeholder="Appunti, citazioni, approfondimenti… (non compaiono nella mappa)"></textarea>
+        <p class="nota">Un foglietto giallo sul nodo segnala che c'è una nota: si legge toccando il nodo.</p>
+      </section>
       <section data-sez="disponi">
         <h3>Disponi</h3>
         <div class="azioni">
@@ -396,6 +407,13 @@ input[type=range]{flex:1;accent-color:var(--accent);min-width:80px}
           <button data-ramo="bassoDestra" title="Nuovo nodo in basso a destra"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="15" y="15" width="6" height="6" rx="1.5" stroke-dasharray="2 2"/><path d="m11 11 4 4"/></svg></button>
         </div>
         <p class="nota">Tocca i + attorno alla forma selezionata (anche quelli più piccoli agli angoli), oppure ⌥ + frecce. Più rami dallo stesso lato si dispongono a ventaglio. Tab: nodo nel primo posto libero.</p>
+        <div class="riga"><label>Riordina la mappa</label></div>
+        <div class="seg riordina">
+          <button data-layout="destra" title="I rami si aprono verso destra">→ Orizzontale</button>
+          <button data-layout="basso" title="I rami scendono verso il basso">↓ Verticale</button>
+          <button data-layout="raggiera" title="I rami tutto intorno al centro">✳ Raggiera</button>
+        </div>
+        <p class="nota">Il nodo selezionato resta fermo e fa da centro; senza selezione, il centro è il nodo con più frecce.</p>
         <div class="azioni" id="allineamenti">
           <button data-alo="sx" title="Allinea a sinistra"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 3v18"/><rect x="7" y="6" width="12" height="4"/><rect x="7" y="14" width="7" height="4"/></svg></button>
           <button data-alo="cx" title="Centra in orizzontale"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18"/><rect x="5" y="6" width="14" height="4"/><rect x="8" y="14" width="8" height="4"/></svg></button>
@@ -408,6 +426,12 @@ input[type=range]{flex:1;accent-color:var(--accent);min-width:80px}
         <h3>Foglio</h3>
         <div class="riga"><label>Sfondo</label></div>
         <div class="colori" id="colSfondo"></div>
+        <div class="riga"><label>Riordina la mappa</label></div>
+        <div class="seg riordina">
+          <button data-layout="destra" title="I rami si aprono verso destra">→ Orizzontale</button>
+          <button data-layout="basso" title="I rami scendono verso il basso">↓ Verticale</button>
+          <button data-layout="raggiera" title="I rami tutto intorno al centro">✳ Raggiera</button>
+        </div>
         <div class="seg" id="tipiGriglia">
           <button data-gr="nessuna">Liscio</button><button data-gr="puntini">Puntini</button><button data-gr="quadretti">Quadretti</button><button data-gr="righe">Righe</button>
         </div>
@@ -1066,7 +1090,7 @@ fabric.Object.prototype.set({
   cornerStyle: 'circle', cornerSize: 11, touchCornerSize: 30, padding: 3, borderScaleFactor: 1.3,
 });
 fabric.Object.prototype.controls.mtr.offsetY = -28;
-const PROPS = ['id','forma','tipoOgg','legatoA','schizzo','riempito','secondo','disegno','perPixelTargetFind','strokeUniform','stileLinea','bloccato',
+const PROPS = ['id','forma','tipoOgg','legatoA','schizzo','nota','chiuso','riempito','secondo','disegno','perPixelTargetFind','strokeUniform','stileLinea','bloccato',
   'lockMovementX','lockMovementY','lockScalingX','lockScalingY','lockRotation','hasControls','globalCompositeOperation'];
 
 function ridimensiona() {
@@ -1830,7 +1854,7 @@ function cancellaInPunto(sp) {
   const objs = canvas.getObjects().slice();
   for (let i = objs.length - 1; i >= 0; i--) {
     const o = objs[i];
-    if (!o.canvas) continue;   // già tolto insieme al suo nodo
+    if (!o.canvas || o.visible === false) continue;   // già tolto, o nascosto in un ramo chiuso
     if (stato.gommaSoloTratti && o.tipoOgg !== 'tratto') continue;
     if (o.bloccato) continue;
     if (o.containsPoint(sp) && !canvas.isTargetTransparent(o, sp.x, sp.y)) {
@@ -1890,6 +1914,7 @@ canvas.on('mouse:down', opt => {
   const e = opt.e;
   if (gesto) return;
   if (collegaDa) { completaCollega(canvas.getPointer(e)); return; }
+  if (stato.strumento === 'seleziona' && toccaPallino(canvas.getPointer(e, true))) return;
   if (e.pointerType === 'pen' && !pennaVista) {
     pennaVista = true;
     if (!stato.soloPenna && !leggiLocale('tabula:pennaChiesta')) {
@@ -2102,7 +2127,7 @@ function zoomA(z, centro) {
   aggiornaGriglia();
 }
 function rettangoloContenuto() {
-  const objs = canvas.getObjects();
+  const objs = canvas.getObjects().filter(o => o.visible !== false);
   if (!objs.length) return null;
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
   for (const o of objs) {
@@ -2248,7 +2273,7 @@ function elimina() {
 }
 function selezionaTutto() {
   scegliStrumento('seleziona');
-  const objs = canvas.getObjects().filter(o => o.selectable !== false);
+  const objs = canvas.getObjects().filter(o => o.selectable !== false && o.visible !== false);
   ripristinaSelezione(objs);
 }
 function raggruppa() {
@@ -2353,6 +2378,7 @@ function nodoCollegato(dir) {
   const s = formaDi(att);
   if (!s) { avviso('Seleziona prima una forma: il nuovo nodo nasce collegato a quella.'); return; }
   if (att !== s && att.isEditing) att.exitEditing();
+  if (s.chiuso) { s.chiuso = false; applicaChiusure(); }
   const w = s.getScaledWidth(), h = s.getScaledHeight();
   const pos = dir ? posizioneRamo(s, w, h, dir) : liberoVicino(s, w, h);
   const n = creaForma(s.forma, pos.x, pos.y, w, h, {fill: s.fill, stroke: s.stroke, strokeWidth: s.strokeWidth, shadow: s.shadow ? ombraStd() : null,
@@ -2379,6 +2405,10 @@ function aggiornaRami() {
   $('#selIncornicia').hidden = !scritteLibere().length;
   const nf = formeSelezionate().length;
   $('#selCollega').hidden = !(nf === 1 || nf === 2);
+  const nr = att && att.type !== 'activeSelection' ? nodoDi(att) : null;
+  const conRami = nr && (nr.chiuso || figliDi(nr.id).length);
+  $('#selRami').hidden = !conRami;
+  if (conRami) $('#selRami .et').textContent = nr.chiuso ? 'Apri rami' : 'Chiudi rami';
   if (collegaDa) { box.hidden = true; return; }
   $('#selAnnulla').disabled = storia.length < 2;
   const s = (stato.strumento === 'seleziona' || stato.strumento === 'testo') && !op && !gesto && !canvas._currentTransform
@@ -2554,6 +2584,7 @@ function salvaStoria() {
   clearTimeout(timerStoria);
   timerStoria = setTimeout(() => {
     if (op) return;   // si salva alla fine del gesto
+    applicaChiusure();
     const j = serializza();
     if (storia[storia.length - 1] !== j) {
       storia.push(j); if (storia.length > 100) storia.shift();
@@ -2579,6 +2610,7 @@ function carica(json, cb) {
       if (o.type === 'freccia') o.controls = CONTROLLI_FRECCIA;
     });
     aggiornaLegami();
+    applicaChiusure();
     aggiornaGriglia();
     canvas.requestRenderAll();
     sospendiStoria = false;
@@ -2637,6 +2669,7 @@ function sezioniVisibili() {
     return s;
   }
   s.add('disponi');
+  if (sel.length === 1 && nodoDi(sel[0])) s.add('nota');
   for (const o of sel) {
     if (o.tipoOgg === 'forma') { s.add('forma'); s.add('tratto'); s.add('riemp'); s.add('testo'); }
     else if (o.type === 'freccia') { s.add('freccia'); s.add('tratto'); }
@@ -2676,6 +2709,8 @@ function aggiornaPannello() {
   const nomeF = forma ? forma.forma : stato.forma;
   $$('#grigliaFormePannello .fb').forEach(b => b.classList.toggle('attivo', b.dataset.f === nomeF));
   $('#boxIncornicia').hidden = !scritteLibere().length;
+  const nn = sel.length === 1 ? nodoDi(sel[0]) : null;
+  if (nn && document.activeElement !== $('#testoNota')) $('#testoNota').value = nn.nota || '';
   const fs = formeSelezionate();
   $('#boxDim').hidden = !fs.length;
   if (fs.length) { $('#larghezza').value = Math.round(fs[0].width * fs[0].scaleX); $('#altezza').value = Math.round(fs[0].height * fs[0].scaleY); }
@@ -3584,6 +3619,214 @@ function costruisciDisegni() {
   });
   mostraDisegni('');
 }
+
+/* ---------------------------------------------------------------- funzioni «alla SimpleMind»: note, rami chiusi, riordino */
+// i nodi della mappa: forme, disegnini e immagini (non i testi dentro le forme)
+function eNodo(o) { return o && !o.legatoA && (o.tipoOgg === 'forma' || o.tipoOgg === 'disegno' || o.type === 'image'); }
+function nodoDi(o) { const s = formaDi(o); return s || (eNodo(o) ? o : null); }
+function figliDi(id) {
+  const out = [];
+  for (const f of canvas.getObjects()) if (f.type === 'freccia' && f.da && f.a && f.da.id === id) { const n = byId(f.a.id); if (n && n.id !== id) out.push(n); }
+  return out;
+}
+// tutto ciò che sta «sotto» un nodo seguendo le frecce in uscita
+function discendenti(id) {
+  const visti = new Set([id]), coda = [id], out = [];
+  while (coda.length) {
+    const c = coda.shift();
+    for (const n of figliDi(c)) if (!visti.has(n.id)) { visti.add(n.id); out.push(n); coda.push(n.id); }
+  }
+  return out;
+}
+
+/* ---- rami chiusi ---- */
+let contaChiusi = {};
+function applicaChiusure() {
+  const nascosti = new Set();
+  contaChiusi = {};
+  for (const o of canvas.getObjects()) if (o.chiuso && eNodo(o)) {
+    const d = discendenti(o.id);
+    contaChiusi[o.id] = d.length;
+    d.forEach(n => nascosti.add(n.id));
+  }
+  const att = canvas.getActiveObject();
+  for (const o of canvas.getObjects()) {
+    const via = nascosti.has(o.id) || (o.legatoA && nascosti.has(o.legatoA))
+      || (o.type === 'freccia' && ((o.da && nascosti.has(o.da.id)) || (o.a && nascosti.has(o.a.id))));
+    if (o.visible === via || o._nascostoRamo !== via) { o.visible = !via; o.evented = !via; o._nascostoRamo = via; }
+  }
+  if (att && att.visible === false) canvas.discardActiveObject();
+}
+function chiudiApriRami() {
+  const att = canvas.getActiveObject();
+  const n = nodoDi(att);
+  if (!n) return;
+  if (att.isEditing) att.exitEditing();
+  if (!n.chiuso && !figliDi(n.id).length) { avviso('Da questo nodo non parte nessuna freccia: non ci sono rami da chiudere.'); return; }
+  n.chiuso = !n.chiuso;
+  applicaChiusure();
+  canvas.setActiveObject(n);
+  canvas.requestRenderAll();
+  salvaStoria();
+  aggiornaRami();
+}
+// il pallino «+N» sul nodo chiuso: in basso a destra
+function puntoPallino(n) { const r = n.getBoundingRect(true, true); return {x: r.left + r.width, y: r.top + r.height}; }
+function toccaPallino(sp) {
+  const v = canvas.viewportTransform;
+  for (const o of canvas.getObjects()) if (o.chiuso && o.visible !== false && contaChiusi[o.id]) {
+    const p = tp(puntoPallino(o), v);
+    if (Math.hypot(p.x - sp.x, p.y - sp.y) < 16) { o.chiuso = false; applicaChiusure(); canvas.setActiveObject(o); canvas.requestRenderAll(); salvaStoria(); return true; }
+  }
+  return false;
+}
+
+/* ---- segni disegnati sopra la mappa: nota (foglietto giallo) e pallino dei rami chiusi ---- */
+canvas.on('after:render', ({ctx}) => {
+  if (!ctx) return;
+  const v = canvas.viewportTransform, z = v[0];
+  ctx.save();
+  ctx.transform(v[0], v[1], v[2], v[3], v[4], v[5]);
+  for (const o of canvas.getObjects()) {
+    if (o.visible === false || !eNodo(o)) continue;
+    if (o.nota && o.nota.trim()) {
+      const r = o.getBoundingRect(true, true), s = 9 / z, x = r.left + r.width - s * .6, y = r.top - s * .4;
+      ctx.beginPath(); ctx.moveTo(x - s, y - s); ctx.lineTo(x + s * .4, y - s); ctx.lineTo(x + s, y - s * .4); ctx.lineTo(x + s, y + s); ctx.lineTo(x - s, y + s); ctx.closePath();
+      ctx.fillStyle = '#fde047'; ctx.fill(); ctx.lineWidth = 1.2 / z; ctx.strokeStyle = '#a16207'; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x - s * .55, y - s * .2); ctx.lineTo(x + s * .55, y - s * .2); ctx.moveTo(x - s * .55, y + s * .3); ctx.lineTo(x + s * .3, y + s * .3); ctx.stroke();
+    }
+    if (o.chiuso && contaChiusi[o.id]) {
+      const p = puntoPallino(o), r = 12 / z;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = '#1d5bb8'; ctx.fill(); ctx.lineWidth = 2 / z; ctx.strokeStyle = '#ffffff'; ctx.stroke();
+      ctx.fillStyle = '#ffffff'; ctx.font = `600 ${11 / z}px Inter, system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('+' + contaChiusi[o.id], p.x, p.y + .5 / z);
+    }
+  }
+  ctx.restore();
+});
+
+/* ---- note ---- */
+function aggiornaBollaNota() {
+  const b = $('#bollaNota');
+  const att = canvas.getActiveObject();
+  const n = att && !op && !collegaDa && !canvas._currentTransform && att.type !== 'activeSelection' ? nodoDi(att) : null;
+  if (!n || !n.nota || !n.nota.trim() || n.visible === false) { b.hidden = true; return; }
+  b.textContent = n.nota;
+  b.hidden = false;
+  const r = n.getBoundingRect(false, true), W = area.clientWidth, H = area.clientHeight;
+  const bw = b.offsetWidth, bh = b.offsetHeight;
+  let x = r.left + r.width + 64, y = r.top;
+  if (x + bw > W - 12) x = r.left - 64 - bw;
+  if (x < 12) { x = Math.max(12, Math.min(W - bw - 12, r.left + r.width / 2 - bw / 2)); y = r.top + r.height + 64; }
+  b.style.left = x + 'px'; b.style.top = Math.max(60, Math.min(H - bh - 12, y)) + 'px';
+}
+canvas.on('after:render', aggiornaBollaNota);
+
+/* ---- riordino automatico ---- */
+function grafoNodi() {
+  const adia = new Map();
+  for (const f of canvas.getObjects()) if (f.type === 'freccia' && f.da && f.a) {
+    const a = byId(f.da.id), b = byId(f.a.id);
+    if (!a || !b || a === b || !eNodo(a) || !eNodo(b)) continue;
+    if (!adia.has(a.id)) adia.set(a.id, {out: [], in: []});
+    if (!adia.has(b.id)) adia.set(b.id, {out: [], in: []});
+    adia.get(a.id).out.push(b); adia.get(b.id).in.push(a);
+  }
+  return adia;
+}
+function radiceAutomatica(adia) {
+  let best = null, punti = -1;
+  for (const [id, x] of adia) { const p = x.out.length * 2 + x.in.length; if (p > punti) { punti = p; best = byId(id); } }
+  return best;
+}
+function riordina(tipo) {
+  const adia = grafoNodi();
+  let radice = nodoDi(canvas.getActiveObject());
+  if (!radice || !adia.has(radice.id)) radice = radiceAutomatica(adia);
+  if (!radice) { avviso('Non ci sono frecce fra i nodi: niente da riordinare.'); return; }
+  // albero: si parte dalla radice e si seguono le frecce (prima quelle in uscita)
+  const figli = new Map(), visti = new Set([radice.id]), coda = [radice];
+  while (coda.length) {
+    const n = coda.shift(), x = adia.get(n.id) || {out: [], in: []};
+    const f = [];
+    for (const m of [...x.out, ...x.in]) if (!visti.has(m.id)) { visti.add(m.id); f.push(m); coda.push(m); }
+    const cn = centroAss(n);
+    const chiave = m => { const c = centroAss(m);
+      if (tipo === 'destra') return c.y;
+      if (tipo === 'basso') return c.x;
+      return (Math.atan2(c.y - cn.y, c.x - cn.x) + Math.PI / 2 + Math.PI * 4) % (Math.PI * 2); };
+    f.sort((a, b) => chiave(a) - chiave(b));
+    figli.set(n.id, f);
+  }
+  const dim = n => { const r = n.getBoundingRect(true, true); return {w: r.width, h: r.height}; };
+  const pos = new Map();
+  if (tipo === 'raggiera') {
+    const foglie = n => { const f = figli.get(n.id); return f.length ? f.reduce((s, m) => s + foglie(m), 0) : 1; };
+    const passo = Math.max(...[...visti].map(id => { const d = dim(byId(id)); return Math.hypot(d.w, d.h); })) + 70;
+    const metti = (n, a0, a1, liv) => {
+      const f = figli.get(n.id), tot = f.reduce((s, m) => s + foglie(m), 0) || 1;
+      let a = a0;
+      for (const m of f) {
+        const amp = (a1 - a0) * foglie(m) / tot, am = a + amp / 2, R = passo * (1 + (liv - 1) * .8);
+        pos.set(m.id, {x: Math.cos(am) * R, y: Math.sin(am) * R});
+        metti(m, a, a + amp, liv + 1);
+        a += amp;
+      }
+    };
+    pos.set(radice.id, {x: 0, y: 0});
+    metti(radice, -Math.PI / 2, Math.PI * 1.5, 1);
+  } else {
+    // albero «a pettine»: livelli in colonne (orizzontale) o in righe (verticale)
+    const orizz = tipo === 'destra', gapL = orizz ? 90 : 70, gapF = orizz ? 30 : 40;
+    const lato = n => orizz ? dim(n).h : dim(n).w;       // misura lungo cui si impilano i fratelli
+    const prof = n => orizz ? dim(n).w : dim(n).h;       // misura lungo cui si va in profondità
+    const ingombro = n => { const f = figli.get(n.id); return Math.max(lato(n), f.reduce((s, m) => s + ingombro(m), 0) + gapF * Math.max(0, f.length - 1)); };
+    const livelli = [];
+    const livello = (n, l) => { livelli[l] = Math.max(livelli[l] || 0, prof(n)); figli.get(n.id).forEach(m => livello(m, l + 1)); };
+    livello(radice, 0);
+    const centroLiv = [0];
+    for (let l = 1; l < livelli.length; l++) centroLiv[l] = centroLiv[l - 1] + livelli[l - 1] / 2 + gapL + livelli[l] / 2;
+    const metti = (n, l, inizio) => {
+      const tot = ingombro(n), c = inizio + tot / 2;
+      pos.set(n.id, orizz ? {x: centroLiv[l], y: c} : {x: c, y: centroLiv[l]});
+      const f = figli.get(n.id);
+      const somma = f.reduce((s, m) => s + ingombro(m), 0) + gapF * Math.max(0, f.length - 1);
+      let k = c - somma / 2;
+      for (const m of f) { metti(m, l + 1, k); k += ingombro(m) + gapF; }
+    };
+    metti(radice, 0, 0);
+  }
+  // la radice resta dov'è; tutto il resto si dispone attorno
+  const c0 = centroAss(radice), p0 = pos.get(radice.id);
+  canvas.discardActiveObject();
+  for (const [id, p] of pos) {
+    if (id === radice.id) continue;
+    const n = byId(id);
+    n.setPositionByOrigin(new fabric.Point(c0.x + p.x - p0.x, c0.y + p.y - p0.y), 'center', 'center');
+    n.setCoords();
+    testiDi(n).forEach(t => adattaTesto(t, n));
+  }
+  aggiornaLegami();
+  canvas.setActiveObject(radice);
+  adatta();
+  canvas.requestRenderAll();
+  salvaStoria();
+  avviso(`Mappa riordinata (${pos.size} nodi).`, {testo: 'Annulla', fn: () => setTimeout(annulla, 250)});
+}
+$$('.riordina button').forEach(b => {
+  b.addEventListener('pointerdown', e => e.preventDefault());
+  b.onclick = () => riordina(b.dataset.layout);
+});
+$('#selRami').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); });
+$('#selRami').onclick = chiudiApriRami;
+$('#testoNota').addEventListener('input', e => {
+  const n = nodoDi(canvas.getActiveObject()) || formeSelezionate()[0];
+  if (!n) return;
+  n.nota = e.target.value;
+  canvas.requestRenderAll();
+});
+$('#testoNota').addEventListener('change', () => salvaStoria());
 
 /* ---------------------------------------------------------------- avvio */
 function costruisciStrumenti() {
