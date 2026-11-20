@@ -184,7 +184,13 @@ input[type=range]{flex:1;accent-color:var(--accent);min-width:80px}
   #testaPannello{display:flex!important}
   #ramiTela button.diag{width:30px;height:30px;margin:-15px 0 0 -15px}
   #barraSel{top:8px}
-  #barraSel button{height:38px;padding:0 12px}
+  #barraSel button{height:38px;padding:0 9px;gap:5px;font-size:13px}
+  #barraSel #selAnnulla .et{display:none}
+  #barraSel{max-width:calc(100% - 12px)}
+}
+@media (max-width:400px){
+  #barraSel #selElimina .et{display:none}
+  #barraSel button{padding:0 8px}
 }
 .st.solotel{display:none}
 #testaPannello{display:none;position:sticky;top:0;z-index:2;justify-content:flex-end;padding:8px 0 4px;background:var(--surface);border-bottom:1px solid var(--line)}
@@ -227,10 +233,11 @@ input[type=range]{flex:1;accent-color:var(--accent);min-width:80px}
     <canvas id="c"></canvas>
 
     <div id="barraSel" hidden>
-      <button id="selIncornicia" title="Racchiudi la scritta in una forma" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="4"/><path d="M8 9h8M12 9v7"/></svg>Incornicia</button>
-      <button id="selModifica" title="Modifica dimensione, colori, forma e testo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4L16 5a2.1 2.1 0 0 1 3 3L8 19z"/><path d="M14 7l3 3"/></svg>Modifica</button>
-      <button id="selElimina" title="Elimina (⌫)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Elimina</button>
-      <button id="selAnnulla" title="Annulla (⌘Z)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Annulla</button>
+      <button id="selIncornicia" title="Racchiudi la scritta in una forma" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="4"/><path d="M8 9h8M12 9v7"/></svg><span class="et">Incornicia</span></button>
+      <button id="selCollega" title="Collega con una freccia a un'altra forma" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="9" width="6" height="6" rx="1.5"/><rect x="16" y="9" width="6" height="6" rx="1.5"/><path d="M8 12h7"/><path d="m12.5 9.5 2.5 2.5-2.5 2.5"/></svg><span class="et">Collega</span></button>
+      <button id="selModifica" title="Modifica dimensione, colori, forma e testo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-4L16 5a2.1 2.1 0 0 1 3 3L8 19z"/><path d="M14 7l3 3"/></svg><span class="et">Modifica</span></button>
+      <button id="selElimina" title="Elimina (⌫)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg><span class="et">Elimina</span></button>
+      <button id="selAnnulla" title="Annulla (⌘Z)" aria-label="Annulla"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span class="et">Annulla</span></button>
     </div>
 
     <div id="ramiTela" hidden>
@@ -1598,6 +1605,7 @@ canvas.on('mouse:down:before', opt => {
 canvas.on('mouse:down', opt => {
   const e = opt.e;
   if (gesto) return;
+  if (collegaDa) { completaCollega(canvas.getPointer(e)); return; }
   if (e.pointerType === 'pen' && !pennaVista) {
     pennaVista = true;
     if (!stato.soloPenna && !leggiLocale('tabula:pennaChiesta')) {
@@ -1852,7 +1860,7 @@ document.addEventListener('keydown', e => {
   if (cmd && e.key === '-') { e.preventDefault(); zoomA(canvas.getZoom() / 1.2); return; }
   if (cmd) return;
   if (e.key === 'Delete' || e.key === 'Backspace') { if (att) { e.preventDefault(); elimina(); } return; }
-  if (e.key === 'Escape') { canvas.discardActiveObject(); scegliStrumento('seleziona'); chiudiMenu(); return; }
+  if (e.key === 'Escape') { if (collegaDa) { esciCollega(); return; } canvas.discardActiveObject(); scegliStrumento('seleziona'); chiudiMenu(); return; }
   if (e.key === 'Tab' && att && att.tipoOgg === 'forma') { e.preventDefault(); nodoCollegato(); return; }
   if (e.key === 'Enter' && att && att.tipoOgg === 'forma') { e.preventDefault(); testoNellaForma(att); return; }
   if (e.altKey && e.key.startsWith('Arrow') && formaDi(att)) {
@@ -2083,8 +2091,11 @@ function nodoCollegato(dir) {
 function aggiornaRami() {
   const box = $('#ramiTela');
   const att = canvas.getActiveObject();
-  $('#barraSel').hidden = !att || !!op || !!gesto;
+  $('#barraSel').hidden = !att || !!op || !!gesto || !!collegaDa;
   $('#selIncornicia').hidden = !scritteLibere().length;
+  const nf = formeSelezionate().length;
+  $('#selCollega').hidden = !(nf === 1 || nf === 2);
+  if (collegaDa) { box.hidden = true; return; }
   $('#selAnnulla').disabled = storia.length < 2;
   const s = (stato.strumento === 'seleziona' || stato.strumento === 'testo') && !op && !gesto && !canvas._currentTransform
     && att && att.type !== 'activeSelection' && !att.bloccato ? formaDi(att) : null;
@@ -2108,6 +2119,61 @@ $('#selElimina').onclick = elimina;
 $('#selModifica').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); });
 $('#selIncornicia').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); });
 $('#selIncornicia').onclick = () => incornicia();
+$('#selCollega').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); });
+$('#selCollega').onclick = () => avviaCollega();
+
+/* «Collega»: una freccia fra due forme già esistenti, senza crearne di nuove */
+let collegaDa = null;
+function frecciaFra(a, b) {
+  const f = new fabric.Freccia({stroke: stato.tratto, strokeWidth: Math.max(stato.spessore, 1), tipo: stato.freccia.tipo,
+    inizio: stato.freccia.inizio, fine: stato.freccia.fine, punta: stato.freccia.punta, da: {id: a.id}, a: {id: b.id},
+    cu: stato.freccia.tipo === 'curva' ? 40 : 0, fontEtichetta: stato.font, stileLinea: stato.stileLinea});
+  canvas.add(f);
+  canvas.sendToBack(f);
+  aggiornaFreccia(f);
+  return f;
+}
+function avviaCollega() {
+  const att = canvas.getActiveObject();
+  if (att && att.isEditing) att.exitEditing();
+  const fs = formeSelezionate();
+  if (fs.length === 2) {
+    const f = frecciaFra(fs[0], fs[1]);
+    canvas.discardActiveObject(); canvas.setActiveObject(f); canvas.requestRenderAll(); salvaStoria();
+    avviso('Forme collegate. Puoi scrivere un\'etichetta sulla freccia con Modifica.');
+    return;
+  }
+  if (fs.length !== 1) { avviso('Seleziona una forma (oppure due) da collegare.'); return; }
+  collegaDa = fs[0];
+  canvas.discardActiveObject();
+  canvas.selection = false; canvas.skipTargetFind = true;
+  canvas.defaultCursor = canvas.hoverCursor = 'crosshair';
+  evidenzia(collegaDa);
+  aggiornaRami();
+  avviso('Ora tocca la forma da collegare.', {testo: 'Annulla', fn: esciCollega}, 60000);
+}
+function esciCollega() {
+  if (!collegaDa) return;
+  evidenzia(null);
+  collegaDa = null;
+  $('#avviso').hidden = true;
+  scegliStrumento('seleziona');
+}
+function completaCollega(p) {
+  const da = collegaDa;
+  const b = formaSotto(p, da);
+  const s = b && formaDi(b);
+  if (!s || s === da || s.tipoOgg !== 'forma') {
+    esciCollega();
+    avviso('Collegamento annullato: non hai toccato un\'altra forma.');
+    return;
+  }
+  esciCollega();
+  const f = frecciaFra(da, s);
+  // finito il tocco, seleziona la nuova freccia (per l'etichetta o lo stile)
+  setTimeout(() => { canvas.setActiveObject(f); canvas.requestRenderAll(); aggiornaPannello(); salvaStoria(); }, 0);
+  avviso('Forme collegate. Puoi scrivere un\'etichetta sulla freccia con Modifica.');
+}
 // scritte libere selezionate (non quelle già dentro una forma)
 function scritteLibere() { return selezionati().filter(o => eTesto(o) && !o.legatoA && !o.group); }
 // racchiude ogni scritta libera selezionata in una forma: la scritta diventa il testo di un nodo
@@ -2920,7 +2986,7 @@ $('#fileJson').onchange = e => {
 
 /* ---------------------------------------------------------------- avvisi */
 let timerAvviso = null;
-function avviso(t, azione) {
+function avviso(t, azione, durata) {
   const a = $('#avviso'); a.textContent = t; a.hidden = false;
   if (azione) {
     const b = document.createElement('button');
@@ -2928,7 +2994,7 @@ function avviso(t, azione) {
     b.onclick = () => { a.hidden = true; azione.fn(); };
     a.appendChild(b);
   }
-  clearTimeout(timerAvviso); timerAvviso = setTimeout(() => a.hidden = true, azione ? 7000 : 4200);
+  clearTimeout(timerAvviso); timerAvviso = setTimeout(() => a.hidden = true, durata || (azione ? 7000 : 4200));
 }
 
 /* ---------------------------------------------------------------- esempio iniziale */
